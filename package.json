@@ -1,0 +1,15 @@
+{
+  "name": "csvis",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A read-only CSV table viewer with DuckDB SQL support for Cursor and VS Code.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
