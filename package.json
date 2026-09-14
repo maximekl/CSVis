@@ -50,7 +50,8 @@
     "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js",
     "test:csv": "npm run compile && node --test dist/test/csv*.test.js",
     "test:query": "npm run compile && node --test dist/test/query*.test.js",
-    "test:serialization": "npm run compile && node --test dist/test/resultSerializer.test.js"
+    "test:serialization": "npm run compile && node --test dist/test/resultSerializer.test.js",
+    "test:session": "npm run compile && node --test dist/test/csvSession.test.js"
   },
   "devDependencies": {
     "@types/node": "22.20.2",

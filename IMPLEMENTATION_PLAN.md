@@ -98,7 +98,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T09 — Implémenter le cycle de vie de l’éditeur
 
-- [ ] Enregistrer le `CustomReadonlyEditorProvider`, créer une session par fichier et libérer toutes les ressources à la fermeture.
+- [x] Enregistrer le `CustomReadonlyEditorProvider`, créer une session par fichier et libérer toutes les ressources à la fermeture.
 - **Dépendances :** T02, T05, T07, T08.
 - **Livrables :** fournisseur d’éditeur et gestionnaire de session CSV.
 - **Vérification :** ouvrir, dupliquer et fermer plusieurs onglets CSV.
