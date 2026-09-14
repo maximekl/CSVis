@@ -35,7 +35,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T02 — Déclarer l’extension Cursor
 
-- [ ] Configurer le manifeste avec `csvis.csvViewer`, le sélecteur `*.csv`, la priorité `default` et la commande `CSVis: Open CSV as Table`.
+- [x] Configurer le manifeste avec `csvis.csvViewer`, le sélecteur `*.csv`, la priorité `default` et la commande `CSVis: Open CSV as Table`.
 - **Dépendances :** T01.
 - **Livrables :** contributions, événements d’activation et métadonnées de l’extension.
 - **Vérification :** validation du manifeste par `vsce ls`.

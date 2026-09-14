@@ -1,15 +1,60 @@
 {
   "name": "csvis",
+  "displayName": "CSVis",
   "version": "0.0.1",
+  "publisher": "csvis",
   "private": true,
   "description": "A read-only CSV table viewer with DuckDB SQL support for Cursor and VS Code.",
+  "categories": [
+    "Visualization"
+  ],
+  "keywords": [
+    "csv",
+    "duckdb",
+    "sql",
+    "table"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/src/extension.js",
+  "activationEvents": [
+    "onCustomEditor:csvis.csvViewer",
+    "onCommand:csvis.openCsvAsTable"
+  ],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "csvis.csvViewer",
+        "displayName": "CSVis CSV Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.csv"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "csvis.openCsvAsTable",
+        "title": "Open CSV as Table",
+        "category": "CSVis"
+      }
+    ]
+  },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/vscode": "1.96.0",
+    "@vscode/vsce": "3.9.2",
     "typescript": "5.9.3"
   },
   "engines": {
+    "vscode": "^1.96.0",
     "node": ">=22"
   }
 }
