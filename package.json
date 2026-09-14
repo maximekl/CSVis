@@ -46,9 +46,11 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js"
   },
   "devDependencies": {
+    "@types/node": "22.20.2",
     "@types/vscode": "1.96.0",
     "@vscode/vsce": "3.9.2",
     "typescript": "5.9.3"
@@ -56,5 +58,8 @@
   "engines": {
     "vscode": "^1.96.0",
     "node": ">=22"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "1.5.5-r.5"
   }
 }

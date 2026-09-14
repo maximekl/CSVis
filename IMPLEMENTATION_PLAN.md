@@ -53,7 +53,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T04 — Intégrer DuckDB Node
 
-- [ ] Ajouter `@duckdb/node-api`, créer une instance en mémoire et gérer proprement la connexion et sa destruction.
+- [x] Ajouter `@duckdb/node-api`, créer une instance en mémoire et gérer proprement la connexion et sa destruction.
 - **Dépendances :** T01, T03.
 - **Livrables :** adaptateur DuckDB isolé du reste de l’extension.
 - **Vérification :** test exécutant `SELECT 42`.
