@@ -44,7 +44,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T03 — Définir le protocole typé
 
-- [ ] Créer les types partagés `CsvOptions`, `ColumnMetadata`, `QueryRequest`, `QueryResult` et les unions de messages host/webview.
+- [x] Créer les types partagés `CsvOptions`, `ColumnMetadata`, `QueryRequest`, `QueryResult` et les unions de messages host/webview.
 - **Dépendances :** T01.
 - **Livrables :** module TypeScript partagé entre l’Extension Host et la webview.
 - **Vérification :** tests TypeScript des messages valides et invalides.
