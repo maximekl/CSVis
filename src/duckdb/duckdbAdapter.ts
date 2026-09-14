@@ -1,8 +1,11 @@
 import {
   DuckDBConnection,
   DuckDBInstance,
+  StatementType,
   type DuckDBResultReader,
 } from "@duckdb/node-api";
+
+export type DuckDBStatementKind = "select" | "other";
 
 export class DuckDBAdapter {
   private disposed = false;
@@ -27,6 +30,29 @@ export class DuckDBAdapter {
   public async query(sql: string): Promise<DuckDBResultReader> {
     this.assertOpen();
     return this.connection.runAndReadAll(sql);
+  }
+
+  public async getStatementKinds(
+    sql: string,
+  ): Promise<readonly DuckDBStatementKind[]> {
+    this.assertOpen();
+
+    const extractedStatements = await this.connection.extractStatements(sql);
+    const statementKinds: DuckDBStatementKind[] = [];
+
+    for (let index = 0; index < extractedStatements.count; index += 1) {
+      const statement = await extractedStatements.prepare(index);
+
+      try {
+        statementKinds.push(
+          statement.statementType === StatementType.SELECT ? "select" : "other",
+        );
+      } finally {
+        statement.destroySync();
+      }
+    }
+
+    return statementKinds;
   }
 
   public dispose(): void {

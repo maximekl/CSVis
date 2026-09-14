@@ -80,7 +80,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T07 — Valider et paginer les requêtes
 
-- [ ] Autoriser un seul `SELECT` ou `WITH`, refuser les autres instructions et envelopper la requête avec `LIMIT 201 OFFSET`.
+- [x] Autoriser un seul `SELECT` ou `WITH`, refuser les autres instructions et envelopper la requête avec `LIMIT 201 OFFSET`.
 - **Dépendances :** T03, T04.
 - **Livrables :** validateur SQL et exécuteur paginé.
 - **Vérification :** tests sur les filtres, agrégats, tris, CTE, requêtes multiples, DDL et DML.

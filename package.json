@@ -48,7 +48,8 @@
     "compile": "tsc",
     "typecheck": "tsc --noEmit",
     "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js",
-    "test:csv": "npm run compile && node --test dist/test/csv*.test.js"
+    "test:csv": "npm run compile && node --test dist/test/csv*.test.js",
+    "test:query": "npm run compile && node --test dist/test/query*.test.js"
   },
   "devDependencies": {
     "@types/node": "22.20.2",
