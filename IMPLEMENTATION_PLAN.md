@@ -71,7 +71,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T06 — Gérer les réglages CSV
 
-- [ ] Supporter le séparateur automatique ou manuel, l’en-tête automatique/présent/absent et les encodages UTF-8/UTF-16/Latin-1.
+- [x] Supporter le séparateur automatique ou manuel, l’en-tête automatique/présent/absent et les encodages UTF-8/UTF-16/Latin-1.
 - **Dépendances :** T05.
 - **Livrables :** options validées et reconstruction de la vue `csv`.
 - **Vérification :** recréer la vue avec chaque combinaison supportée.
