@@ -89,7 +89,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T08 — Sérialiser les résultats
 
-- [ ] Convertir les résultats DuckDB en données JSON sûres en préservant `NULL`, `BIGINT`, les décimaux, les dates et les types complexes.
+- [x] Convertir les résultats DuckDB en données JSON sûres en préservant `NULL`, `BIGINT`, les décimaux, les dates et les types complexes.
 - **Dépendances :** T04, T07.
 - **Livrables :** sérialiseur de colonnes et de lignes.
 - **Vérification :** fixture couvrant chaque type pris en charge.

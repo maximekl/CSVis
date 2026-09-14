@@ -1,4 +1,4 @@
-import type { DuckDBValue } from "@duckdb/node-api";
+import type { DuckDBType, DuckDBValue } from "@duckdb/node-api";
 
 import type { DuckDBAdapter } from "../duckdb/duckdbAdapter";
 import type { ColumnMetadata, QueryRequest } from "../shared/protocol";
@@ -9,6 +9,7 @@ export const MAX_QUERY_PAGE_SIZE = 200;
 export interface RawQueryPage {
   readonly requestId: string;
   readonly columns: readonly ColumnMetadata[];
+  readonly columnTypes: readonly DuckDBType[];
   readonly rows: readonly (readonly DuckDBValue[])[];
   readonly page: number;
   readonly pageSize: number;
@@ -41,6 +42,7 @@ export class QueryExecutor {
         name,
         type: result.columnType(index).toString(),
       })),
+      columnTypes: result.columnTypes(),
       rows: fetchedRows.slice(0, request.pageSize),
       page: request.page,
       pageSize: request.pageSize,
