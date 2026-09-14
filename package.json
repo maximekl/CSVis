@@ -47,7 +47,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc",
     "typecheck": "tsc --noEmit",
-    "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js"
+    "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js",
+    "test:csv": "npm run compile && node --test dist/test/csvSource.test.js"
   },
   "devDependencies": {
     "@types/node": "22.20.2",

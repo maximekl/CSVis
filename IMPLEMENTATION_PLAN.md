@@ -62,7 +62,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T05 — Créer la source CSV virtuelle
 
-- [ ] Construire la vue `csv` à partir du fichier ouvert avec l’auto-détection DuckDB.
+- [x] Construire la vue `csv` à partir du fichier ouvert avec l’auto-détection DuckDB.
 - **Dépendances :** T04.
 - **Livrables :** service de création et de remplacement de la vue CSV.
 - **Vérification :** fixtures avec virgule, point-virgule, tabulation, guillemets et cellules multilignes.
