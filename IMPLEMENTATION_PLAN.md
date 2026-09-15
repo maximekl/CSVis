@@ -197,11 +197,12 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T20 — Documenter et effectuer la recette Cursor
 
-- [ ] Documenter le développement, les raccourcis, la syntaxe SQL, les réglages, le packaging et l’installation via « Extensions: Install from VSIX ».
+- [x] Documenter le développement, les raccourcis, la syntaxe SQL, les réglages, le packaging et l’installation via « Extensions: Install from VSIX ».
 - **Dépendances :** T17, T18, T19.
 - **Livrables :** README utilisateur/développeur et procédure de recette.
-- **Vérification :** suivre le README depuis un clone propre et installer le VSIX dans Cursor.
-- **Acceptation :** l’ouverture d’un CSV réel, une requête avec agrégation et le retour à l’éditeur texte réussissent.
+- **Vérification :** `npm ci`, typecheck, tests et packaging depuis un clone propre ; VSIX final installé dans un profil Cursor temporaire ; recette automatisée dans Cursor 3.19.13 en mode classique.
+- **Acceptation :** le CSV météo public Vega s’ouvre par défaut, l’agrégation renvoie 1 461 jours dont 623 avec précipitations, et le retour à l’éditeur texte conserve le fichier inchangé.
+- **Limites :** l’installation permanente dans le profil Cursor courant a été refusée par le contrôle de permissions ; ce profil reste inchangé. Le harnais de tests Cursor passe en mode classique, mais échoue dans le mode « glass » par défaut ; le parcours manuel de la palette de commandes reste à confirmer dans le profil habituel.
 - **Commit :** `docs: document and validate Cursor workflow`
 
 ## Ordre et parallélisation

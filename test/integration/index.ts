@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -80,6 +80,55 @@ export async function run(): Promise<void> {
 
     await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
     await waitFor(() => api.activeSessionCount() === 0, "final close");
+
+    const weatherCsvPath = process.env.CSVIS_RECIPE_WEATHER_CSV_PATH;
+
+    if (weatherCsvPath !== undefined) {
+      const weatherUri = vscode.Uri.file(weatherCsvPath);
+      const originalCsv = await readFile(weatherCsvPath, "utf8");
+
+      console.log("Recipe: real CSV opens by default and SQL aggregation succeeds");
+      await vscode.commands.executeCommand("vscode.open", weatherUri);
+      await waitForCustomTab(weatherUri);
+      await waitFor(() => api.activeSessionCount() === 1, "weather CSV session");
+
+      const weatherResult = await api.executeQuery(
+        weatherUri,
+        request(
+          "weather",
+          "SELECT count(*) AS days, " +
+            "count(*) FILTER (WHERE precipitation > 0) AS rainy_days FROM csv",
+        ),
+      );
+      assert.equal(weatherResult.type, "queryResult");
+      assert.equal(Number(weatherResult.result.rows[0]?.[0]), 1461);
+      assert.equal(Number(weatherResult.result.rows[0]?.[1]), 623);
+
+      console.log("Recipe: reopen the real CSV in the text editor unchanged");
+      await vscode.commands.executeCommand("vscode.openWith", weatherUri, "default");
+      await waitFor(() => {
+        const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+        return (
+          input instanceof vscode.TabInputText &&
+          input.uri.toString() === weatherUri.toString()
+        );
+      }, "text editor for weather CSV");
+      const textDocument = await vscode.workspace.openTextDocument(weatherUri);
+      assert.equal(textDocument.getText(), originalCsv);
+
+      const customTabs = vscode.window.tabGroups.all
+        .flatMap((group) => group.tabs)
+        .filter((tab) =>
+          tab.input instanceof vscode.TabInputCustom &&
+          tab.input.viewType === VIEW_TYPE &&
+          tab.input.uri.toString() === weatherUri.toString()
+        );
+      assert.equal(customTabs.length, 1);
+      assert.equal(await vscode.window.tabGroups.close(customTabs), true);
+      await waitFor(() => api.activeSessionCount() === 0, "weather session closed");
+      await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+    }
+
     console.log("Integration: all Extension Development Host scenarios passed");
   } finally {
     await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
