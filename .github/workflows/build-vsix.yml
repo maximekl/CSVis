@@ -1,8 +1,9 @@
-name: Build macOS ARM64 VSIX
+name: Build and release platform VSIX
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -14,9 +15,19 @@ env:
 
 jobs:
   build:
-    name: Build darwin-arm64
-    runs-on: macos-15
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: linux-x64
+            runner: ubuntu-24.04
+          - target: win32-x64
+            runner: windows-2025
 
     steps:
       - name: Check out source
@@ -33,8 +44,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: node -e "const version = require('./package.json').version; if (process.env.GITHUB_REF_NAME !== 'v' + version) throw new Error('Tag must match package version v' + version)"
+
       - name: Check runner and native binding
-        run: node scripts/check-ci-platform.mjs darwin-arm64
+        run: node scripts/check-ci-platform.mjs ${{ matrix.target }}
 
       - name: Typecheck
         run: npm run typecheck
@@ -43,17 +58,65 @@ jobs:
         run: npm run compile
 
       - name: Test
-        run: npm test
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == Linux ]]; then
+            xvfb-run -a npm test
+          else
+            npm test
+          fi
 
       - name: Package platform VSIX
         run: npm run package
 
       - name: Verify installed VSIX
-        run: npm run verify:package
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == Linux ]]; then
+            xvfb-run -a npm run verify:package
+          else
+            npm run verify:package
+          fi
 
       - name: Upload platform VSIX
         uses: actions/upload-artifact@v7
         with:
-          name: csvis-darwin-arm64
-          path: dist/*-darwin-arm64.vsix
+          name: csvis-${{ matrix.target }}
+          path: dist/*-${{ matrix.target }}.vsix
           if-no-files-found: error
+
+  release:
+    name: Attach VSIX to GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download platform VSIX
+        uses: actions/download-artifact@v8
+        with:
+          pattern: csvis-*
+          path: dist
+          merge-multiple: true
+
+      - name: Check release assets
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for target in darwin-arm64 linux-x64 win32-x64; do
+            test -f "dist/csvis-${version}-${target}.vsix"
+          done
+
+      - name: Create release or attach assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.vsix
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.vsix --verify-tag --generate-notes
+          fi
