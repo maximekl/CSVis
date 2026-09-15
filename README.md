@@ -1,83 +1,76 @@
 # CSVis
 
-CSVis ouvre les fichiers CSV dans une grille en lecture seule dans Cursor ou VS Code desktop. Une console SQL DuckDB permet de filtrer, trier et agréger la table virtuelle `csv`. Le fichier reste local : CSVis ne l’envoie pas à un service distant et n’autorise pas les requêtes à lire d’autres fichiers.
+CSVis permet d’explorer un fichier CSV dans Cursor ou VS Code, sous forme de tableau, sans modifier son contenu. Vous pouvez chercher des lignes, trier et calculer des totaux avec une requête SQL. Le fichier reste sur votre ordinateur.
 
-## Installer le VSIX dans Cursor
+## Fonctionnalités
 
-La v1 fonctionne sur macOS Intel/ARM, Linux x64/ARM64 et Windows x64. Le workflow GitHub Actions actuel ne construit que le VSIX macOS ARM64 ; sur les autres plateformes, construisez le VSIX directement sur la machine cible afin d’y inclure le bon module natif DuckDB. Cursor ou VS Code doit prendre en charge les extensions ciblant l’API VS Code `^1.96.0`.
+- Ouvrir un CSV directement en tableau, ou basculer entre tableau et texte.
+- Parcourir les lignes et les colonnes, redimensionner les colonnes et passer d’une page de résultats à l’autre.
+- Filtrer, trier, sélectionner des colonnes et calculer des statistiques avec SQL.
+- Corriger la lecture du CSV : séparateur, présence d’un en-tête et encodage.
+- Retrouver les réglages choisis pour un fichier dans le même espace de travail.
+- Recharger la vue lorsque le CSV est modifié sur disque.
+- Consulter les données en lecture seule, sans envoi du fichier à un service distant.
 
-Sur la machine cible, avec Node.js 22 ou supérieur :
+## Installation
 
-```sh
-npm ci
-npm run package
+Une fois CSVis publiée sur la Marketplace, ouvrez la vue **Extensions** de VS Code (`Cmd+Shift+X` sur macOS ou `Ctrl+Shift+X` sur Windows et Linux), recherchez **CSVis** par **MaximeK**, puis cliquez sur **Install**.
+
+En attendant sa publication, la procédure d’installation à partir d’un VSIX figure dans [README_DEV.md](README_DEV.md).
+
+## Découvrir les fonctions avec un exemple
+
+Imaginez un fichier `scores.csv` contenant :
+
+```csv
+name,city,score
+Alice,Paris,12
+Bob,Lyon,8
+Chloé,Paris,18
 ```
 
-Le fichier généré est `dist/csvis-0.0.1-<plateforme>.vsix`, par exemple `dist/csvis-0.0.1-darwin-arm64.vsix` sur un Mac Apple Silicon. La commande refuse une plateforme non prise en charge ou une installation sans module DuckDB natif correspondant.
+### Ouvrir et parcourir le tableau
 
-Dans Cursor, ouvrez la palette de commandes avec `Cmd+Shift+P` (macOS) ou `Ctrl+Shift+P` (Windows/Linux), lancez **Extensions: Install from VSIX…**, puis sélectionnez ce fichier. Recherchez ensuite **CSVis** dans les extensions installées. Le VSIX est local ; il n’est pas publié sur une marketplace.
+Ouvrez `scores.csv` : CSVis affiche les trois lignes avec les colonnes `name`, `city` et `score`. Le nom et le type de chaque colonne apparaissent dans l’en-tête. Si une colonne est trop étroite, faites glisser son bord droit pour lire toute sa valeur.
 
-## Utiliser la grille et SQL
+Si le CSV est déjà ouvert comme texte, lancez **CSVis: Open CSV as Table** depuis la palette de commandes. Pour revoir le texte d’origine, lancez **View: Reopen Editor With…** puis choisissez **Text Editor**. La vue en tableau ne permet pas d’éditer les cellules.
 
-Ouvrez un fichier `*.csv` : CSVis est l’éditeur par défaut. Si le fichier est déjà ouvert dans l’éditeur texte, lancez **CSVis: Open CSV as Table** depuis la palette de commandes. Pour revenir au texte, lancez **View: Reopen Editor With…** et choisissez **Text Editor**. La grille ne permet pas de modifier le CSV.
+### Chercher, trier et calculer avec SQL
 
-La requête initiale est `SELECT * FROM csv`. La console accepte un seul `SELECT` ou `WITH` à la fois, selon la syntaxe DuckDB. Exécutez-la avec **Run query** ou `Cmd+Enter` / `Ctrl+Enter`. Par exemple :
+Le tableau s’appelle `csv` dans les requêtes. Saisissez une requête dans **SQL query**, puis cliquez sur **Run query** ou utilisez `Cmd+Enter` / `Ctrl+Enter`.
+
+Afficher seulement les personnes de Paris :
 
 ```sql
-SELECT name, score FROM csv WHERE score >= 10 ORDER BY score DESC
+SELECT name, score FROM csv WHERE city = 'Paris'
 ```
+
+Les résultats sont Alice (`12`) et Chloé (`18`). Pour classer tous les scores du plus grand au plus petit :
 
 ```sql
-SELECT count(*) AS lignes, sum(score) AS total FROM csv
+SELECT name, score FROM csv ORDER BY score DESC
 ```
 
-Les résultats sont paginés par blocs de 200 lignes ; utilisez **Previous** et **Next**. Une nouvelle requête ou un changement de réglages repart à la première page. Les instructions de modification (`INSERT`, `DELETE`, `CREATE`, etc.), les requêtes multiples, les lectures d’autres fichiers et les accès externes sont refusés. Les erreurs SQL s’affichent dans la console sans fermer l’éditeur.
+Chloé apparaît alors en premier. Pour compter les lignes et additionner les scores :
 
-## Corriger la lecture du CSV
-
-Le panneau **CSV settings** propose :
-
-- **Delimiter** : détection automatique ou caractère manuel (par exemple `,`, `;` ou une tabulation).
-- **Header row** : détection automatique, première ligne présente ou absence d’en-tête.
-- **Encoding** : UTF-8, UTF-16 ou Latin-1.
-
-Cliquez **Apply settings** pour reconstruire la vue `csv`. Les choix sont conservés par fichier et par espace de travail ; ils sont restaurés lorsque vous rouvrez ce fichier dans le même espace de travail. Si le CSV change sur disque, la vue se recharge ; s’il est supprimé, un message explicite remplace les résultats jusqu’à sa recréation.
-
-## Développer et vérifier
-
-Depuis un clone propre, avec Node.js 22 ou supérieur et npm :
-
-```sh
-npm ci
-npm run typecheck
-npm test
-npm run package
-npm run verify:package
+```sql
+SELECT count(*) AS personnes, sum(score) AS total FROM csv
 ```
 
-`npm test` compile l’extension et la webview, exécute les tests unitaires et lance les scénarios d’intégration dans un Extension Development Host VS Code. `npm run verify:package` installe le VSIX dans un profil VS Code isolé, vérifie ses fichiers et relance ces scénarios ; ce profil temporaire est ensuite supprimé. Sur Linux sans écran, exécutez ces deux commandes avec `xvfb-run -a`. La recette de performance de 500 Mo est reproductible avec `npm run test:performance` et crée une fixture temporaire non versionnée.
+Vous obtenez `3` personnes et un total de `38`. Les requêtes doivent uniquement lire les données : par exemple, `DELETE FROM csv` est refusé, tout comme la lecture d’un autre fichier. Si une requête est incorrecte, un message d’erreur apparaît sous la console.
 
-Au premier lancement des tests d’intégration ou de `verify:package`, le harnais télécharge VS Code si aucune version n’est encore en cache ; prévoyez donc un accès réseau. Pour `npm test` et `npm run test:integration` en environnement hors ligne, `CSVIS_VSCODE_EXECUTABLE_PATH` peut désigner un exécutable VS Code déjà installé. Pour choisir une version VS Code mise en cache, utilisez `CSVIS_VSCODE_VERSION`.
+### Passer d’une page à l’autre
 
-Le code de l’Extension Host est dans `src/extension.ts`, la session CSV et l’éditeur personnalisé dans `src/editor/`, la source CSV et les options dans `src/csv/`, la validation et la pagination SQL dans `src/query/`, et l’interface React dans `src/webview/`. `src/shared/protocol.ts` définit les messages échangés entre l’Extension Host et la webview. Le packaging est réalisé par `scripts/package-vsix.mjs` ; le workflow macOS ARM64 se trouve dans `.github/workflows/build-vsix.yml`.
+Sur un CSV de 430 lignes, CSVis affiche les résultats par pages de 200 lignes. Cliquez sur **Next** pour voir les lignes 201 à 400, puis sur **Previous** pour revenir aux premières lignes. Une nouvelle requête revient à la page 1.
 
-## Recette manuelle dans Cursor
+### Corriger la lecture d’un CSV
 
-À réaliser sur la plateforme du VSIX, avec un CSV réel dont vous connaissez au moins un total attendu :
+Dans **CSV settings**, vous pouvez modifier trois choix, puis cliquer sur **Apply settings** :
 
-1. Installez le VSIX via **Extensions: Install from VSIX…** et vérifiez que **CSVis** apparaît dans les extensions installées.
-2. Ouvrez le CSV et vérifiez que la grille CSVis s’affiche par défaut, avec ses colonnes et la première page de données.
-3. Exécutez `SELECT count(*) AS lignes FROM csv`, puis une agrégation sur une colonne numérique du fichier ; comparez les résultats à vos valeurs attendues.
-4. Essayez un filtre ou un tri, puis, si le fichier a plus de 200 lignes, passez à la page suivante et revenez à la précédente.
-5. Corrigez si nécessaire le séparateur, l’en-tête ou l’encodage ; fermez et rouvrez le CSV pour vérifier la persistance des réglages.
-6. Lancez **View: Reopen Editor With…** → **Text Editor** et vérifiez que le contenu CSV d’origine est visible et inchangé.
+- **Delimiter** : si `name;city;score` apparaît dans une seule colonne, choisissez **Manual** et indiquez `;`.
+- **Header row** : si la première ligne contient déjà des données, choisissez **Absent** pour ne pas la traiter comme un nom de colonne.
+- **Encoding** : si les accents sont mal affichés, essayez **Latin-1** ou **UTF-16** selon le fichier.
 
-Pour un essai déterministe sans CSV métier, `test/fixtures/comma.csv` contient deux lignes ; `SELECT count(*) AS lignes, sum(score) AS total FROM csv` doit donner `2` et `30.75`. Cet exemple ne remplace pas la recette avec un CSV réel.
+Par exemple, réglez `ventes.csv` sur le séparateur `;`, fermez-le, puis rouvrez-le dans le même espace de travail : ce choix est retrouvé. Si vous ajoutez une ligne au fichier et l’enregistrez, le tableau se recharge ; si vous supprimez le fichier, CSVis affiche un message et attend qu’il soit recréé.
 
-Un CSV d’observations météo publiques est aussi disponible dans le [jeu de données Vega](https://github.com/vega/vega-datasets/blob/2434f551e0bb12b99a4ce6764fbc0ef39bea145e/data/seattle-weather.csv). Téléchargez cette révision figée dans un dossier temporaire, puis ouvrez-la dans Cursor :
-
-```sh
-curl -fL https://raw.githubusercontent.com/vega/vega-datasets/2434f551e0bb12b99a4ce6764fbc0ef39bea145e/data/seattle-weather.csv -o /tmp/seattle-weather.csv
-```
-
-Avec `SELECT count(*) AS jours, count(*) FILTER (WHERE precipitation > 0) AS jours_pluie FROM csv`, les résultats attendus sont `1461` jours et `623` jours de pluie. Le scénario automatisé optionnel peut être lancé avec `CSVIS_RECIPE_WEATHER_CSV_PATH=/tmp/seattle-weather.csv npm run test:integration` ; il vérifie aussi le retour au texte sans modification du CSV.
+CSVis reste en lecture seule : aucune de ces actions ne modifie le CSV d’origine.
