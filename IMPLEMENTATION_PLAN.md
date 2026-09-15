@@ -161,7 +161,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T16 — Ajouter les tests d’intégration
 
-- [ ] Configurer `@vscode/test-electron` et tester l’activation, l’ouverture par défaut, les requêtes, les erreurs et la fermeture.
+- [x] Configurer `@vscode/test-electron` et tester l’activation, l’ouverture par défaut, les requêtes, les erreurs et la fermeture.
 - **Dépendances :** T11, T12, T13, T14, T15.
 - **Livrables :** configuration de l’Extension Development Host et scénarios d’intégration.
 - **Vérification :** `npm test`.

@@ -42,6 +42,10 @@ export class CsvSessionManager {
     return this.entries.size;
   }
 
+  public getSession(uri: Uri): CsvSession | undefined {
+    return this.entries.get(uri.toString())?.session;
+  }
+
   public async open(uri: Uri): Promise<CsvCustomDocument> {
     if (this.disposed) {
       throw new Error("CSV session manager has been disposed");
