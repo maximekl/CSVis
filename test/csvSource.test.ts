@@ -83,30 +83,27 @@ const fixtures: readonly FixtureExpectation[] = [
 ];
 
 test("creates and replaces the csv view using DuckDB auto-detection", async (t) => {
-  const database = await DuckDBAdapter.createInMemory();
-  const source = new CsvSource(database);
+  for (const fixture of fixtures) {
+    await t.test(fixture.fileName, async () => {
+      const filePath = path.join(fixturesDirectory, fixture.fileName);
+      const database = await DuckDBAdapter.createInMemory(filePath);
+      const source = new CsvSource(database);
 
-  try {
-    for (const fixture of fixtures) {
-      await t.test(fixture.fileName, async () => {
-        const columns = await source.replace(
-          path.join(fixturesDirectory, fixture.fileName),
-        );
+      try {
+        const columns = await source.replace(filePath);
         const result = await database.query("SELECT * FROM csv");
 
         assert.deepEqual(columns, fixture.columns);
         assert.deepEqual(result.getRows(), fixture.rows);
-      });
-    }
-  } finally {
-    database.dispose();
+      } finally {
+        database.dispose();
+      }
+    });
   }
 });
 
 test("rebuilds the csv view with every supported option combination", async (t) => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "csvis-options-"));
-  const database = await DuckDBAdapter.createInMemory();
-  const source = new CsvSource(database);
   const delimiters: readonly CsvOptions["delimiter"][] = [
     { mode: "auto" },
     { mode: "manual", value: ";" },
@@ -127,28 +124,33 @@ test("rebuilds the csv view with every supported option combination", async (t) 
             const filePath = path.join(directory, `${caseName}.csv`);
 
             await writeFile(filePath, encodeCsv(content, encoding));
+            const database = await DuckDBAdapter.createInMemory(filePath);
+            const source = new CsvSource(database);
 
-            const columns = await source.replace(filePath, {
-              delimiter,
-              header,
-              encoding,
-            });
-            const result = await database.query("SELECT * FROM csv");
+            try {
+              const columns = await source.replace(filePath, {
+                delimiter,
+                header,
+                encoding,
+              });
+              const result = await database.query("SELECT * FROM csv");
 
-            assert.deepEqual(columns, [
-              { name: hasHeader ? "id" : "column0", type: "BIGINT" },
-              { name: hasHeader ? "name" : "column1", type: "VARCHAR" },
-            ]);
-            assert.deepEqual(result.getRows(), [
-              [1n, "Café"],
-              [2n, "Zoë"],
-            ]);
+              assert.deepEqual(columns, [
+                { name: hasHeader ? "id" : "column0", type: "BIGINT" },
+                { name: hasHeader ? "name" : "column1", type: "VARCHAR" },
+              ]);
+              assert.deepEqual(result.getRows(), [
+                [1n, "Café"],
+                [2n, "Zoë"],
+              ]);
+            } finally {
+              database.dispose();
+            }
           });
         }
       }
     }
   } finally {
-    database.dispose();
     await rm(directory, { recursive: true, force: true });
   }
 });
@@ -156,7 +158,7 @@ test("rebuilds the csv view with every supported option combination", async (t) 
 test("corrects a bad header detection without reopening the file", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "csvis-header-"));
   const filePath = path.join(directory, "cities.csv");
-  const database = await DuckDBAdapter.createInMemory();
+  const database = await DuckDBAdapter.createInMemory(filePath);
   const source = new CsvSource(database);
 
   try {

@@ -152,7 +152,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T15 — Renforcer la sécurité et les ressources
 
-- [ ] Limiter DuckDB au chemin du fichier ouvert, désactiver les accès externes et les extensions, verrouiller la configuration et appliquer la limite mémoire.
+- [x] Limiter DuckDB au chemin du fichier ouvert, désactiver les accès externes et les extensions, verrouiller la configuration et appliquer la limite mémoire.
 - **Dépendances :** T04, T05, T07, T09.
 - **Livrables :** configuration DuckDB restrictive et tests de sécurité.
 - **Vérification :** tenter `COPY`, `ATTACH`, `INSTALL`, une lecture d’un autre fichier et une modification de configuration.

@@ -1,4 +1,5 @@
 import type { DuckDBAdapter } from "../duckdb/duckdbAdapter";
+import { toSqlStringLiteral } from "../duckdb/sqlLiteral";
 import type { ColumnMetadata, CsvOptions } from "../shared/protocol";
 import { DEFAULT_CSV_OPTIONS, parseCsvOptions } from "./csvOptions";
 
@@ -56,8 +57,4 @@ export class CsvSource {
       return { name, type };
     });
   }
-}
-
-function toSqlStringLiteral(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`;
 }

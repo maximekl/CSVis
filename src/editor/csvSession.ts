@@ -51,7 +51,7 @@ export class CsvSession {
     uri: Uri,
     options: CsvOptions = DEFAULT_CSV_OPTIONS,
   ): Promise<CsvSession> {
-    const database = await DuckDBAdapter.createInMemory();
+    const database = await DuckDBAdapter.createInMemory(uri.fsPath);
 
     try {
       const source = new CsvSource(database);
