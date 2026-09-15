@@ -7,7 +7,7 @@ import * as vscode from "vscode";
 import type { IntegrationTestApi } from "../../src/extension";
 import type { HostToWebviewMessage, QueryRequest } from "../../src/shared/protocol";
 
-const EXTENSION_ID = "csvis.csvis";
+const EXTENSION_ID = "MaximeK.csvis";
 const VIEW_TYPE = "csvis.csvViewer";
 const OPEN_COMMAND = "csvis.openCsvAsTable";
 const MIN_FILE_BYTES = 500 * 1024 * 1024;

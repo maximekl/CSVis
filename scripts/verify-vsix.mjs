@@ -11,6 +11,7 @@ const manifest = JSON.parse(
   await readFile(path.join(extensionRoot, "package.json"), "utf8"),
 );
 const target = `${process.platform}-${process.arch}`;
+const extensionId = `${manifest.publisher}.${manifest.name}`.toLowerCase();
 const vsixPath = path.join(
   extensionRoot,
   "dist",
@@ -40,14 +41,14 @@ try {
     { version, cachePath },
   );
   assert.ok(
-    listed.stdout.split(/\r?\n/u).includes(`${manifest.publisher}.${manifest.name}`),
+    listed.stdout.split(/\r?\n/u).some((id) => id.toLowerCase() === extensionId),
     "the VSIX must appear in the isolated extension list",
   );
 
   const entries = await readdir(extensionsDir, { withFileTypes: true });
   const installed = entries.filter((entry) =>
     entry.isDirectory() &&
-    entry.name.startsWith(`${manifest.publisher}.${manifest.name}-`)
+    entry.name.toLowerCase().startsWith(`${extensionId}-`)
   );
   assert.equal(installed.length, 1);
   const installedRoot = path.join(extensionsDir, installed[0].name);
