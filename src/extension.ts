@@ -8,7 +8,10 @@ import {
 import { CsvSessionManager } from "./editor/csvSessionManager";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const provider = new CsvEditorProvider(new CsvSessionManager());
+  const provider = new CsvEditorProvider(
+    new CsvSessionManager(),
+    context.extensionUri,
+  );
   const providerRegistration = vscode.window.registerCustomEditorProvider(
     CSV_EDITOR_VIEW_TYPE,
     provider,

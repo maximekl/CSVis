@@ -107,7 +107,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T10 — Construire la webview
 
-- [ ] Mettre en place React, le bundling, la CSP stricte et le canal de messages avec l’Extension Host.
+- [x] Mettre en place React, le bundling, la CSP stricte et le canal de messages avec l’Extension Host.
 - **Dépendances :** T01, T03.
 - **Livrables :** point d’entrée React, HTML sécurisé et pipeline de build webview.
 - **Vérification :** la webview affiche un état de chargement puis un résultat simulé.

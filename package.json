@@ -45,18 +45,23 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc",
-    "typecheck": "tsc --noEmit",
+    "compile": "tsc && npm run build:webview",
+    "build:webview": "node scripts/build-webview.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js",
     "test:csv": "npm run compile && node --test dist/test/csv*.test.js",
     "test:query": "npm run compile && node --test dist/test/query*.test.js",
     "test:serialization": "npm run compile && node --test dist/test/resultSerializer.test.js",
-    "test:session": "npm run compile && node --test dist/test/csvSession.test.js"
+    "test:session": "npm run compile && node --test dist/test/csvSession.test.js",
+    "test:webview": "npm run compile && node --test dist/test/webview.test.js"
   },
   "devDependencies": {
     "@types/node": "22.20.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/vscode": "1.96.0",
     "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3"
   },
   "engines": {
@@ -64,6 +69,8 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@duckdb/node-api": "1.5.5-r.5"
+    "@duckdb/node-api": "1.5.5-r.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   }
 }
