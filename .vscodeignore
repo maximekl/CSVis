@@ -1,4 +1,5 @@
 .gitignore
+.github/**
 .vscode-test/**
 IMPLEMENTATION_PLAN.md
 package-lock.json

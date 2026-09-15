@@ -186,14 +186,14 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 - **Acceptation :** un fichier installable est produit sans sources ni fixtures inutiles.
 - **Commit :** `build: package local VSIX`
 
-### T19 — Ajouter les builds multiplateformes
+### T19 — Ajouter le build macOS ARM64
 
-- [ ] Créer une matrice GitHub Actions pour Darwin x64/ARM64, Linux x64/ARM64 et Windows x64.
+- [x] Créer un workflow GitHub Actions pour Darwin ARM64 uniquement (périmètre réduit à la demande de l’utilisateur).
 - **Dépendances :** T18.
-- **Livrables :** workflow de compilation, test et packaging multiplateforme.
-- **Vérification :** chaque job exécute le build, les tests et le packaging.
-- **Acceptation :** cinq artefacts VSIX nommés avec leur plateforme sont produits.
-- **Commit :** `ci: add multiplatform builds`
+- **Livrables :** workflow de compilation, test et packaging macOS ARM64.
+- **Vérification :** build, tests, packaging et installation isolée du VSIX exécutés localement ; exécution GitHub Actions à confirmer après configuration du dépôt distant.
+- **Acceptation :** un VSIX Darwin ARM64 installable est produit et le workflow le publie comme artefact `csvis-darwin-arm64`.
+- **Commit :** `ci: add macOS ARM64 build`
 
 ### T20 — Documenter et effectuer la recette Cursor
 
