@@ -2,6 +2,7 @@
 .github/**
 .vscode-test/**
 IMPLEMENTATION_PLAN.md
+README_DEV.md
 package-lock.json
 scripts/**
 src/**

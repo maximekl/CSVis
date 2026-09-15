@@ -16,8 +16,6 @@ CSVis permet d’explorer un fichier CSV dans Cursor ou VS Code, sous forme de t
 
 Une fois CSVis publiée sur la Marketplace, ouvrez la vue **Extensions** de VS Code (`Cmd+Shift+X` sur macOS ou `Ctrl+Shift+X` sur Windows et Linux), recherchez **CSVis** par **MaximeK**, puis cliquez sur **Install**.
 
-En attendant sa publication, la procédure d’installation à partir d’un VSIX figure dans [README_DEV.md](README_DEV.md).
-
 ## Découvrir les fonctions avec un exemple
 
 Imaginez un fichier `scores.csv` contenant :
