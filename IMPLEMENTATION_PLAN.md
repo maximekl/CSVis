@@ -179,7 +179,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T18 — Générer le VSIX local
 
-- [ ] Ajouter le bundling de production, `.vscodeignore` et `npm run package` avec détection de la plateforme.
+- [x] Ajouter le bundling de production, `.vscodeignore` et `npm run package` avec détection de la plateforme.
 - **Dépendances :** T02, T15, T16.
 - **Livrables :** script de packaging et VSIX dans `dist/`.
 - **Vérification :** générer puis inspecter le contenu du VSIX.

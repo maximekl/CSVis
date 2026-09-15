@@ -1,0 +1,16 @@
+.gitignore
+.vscode-test/**
+IMPLEMENTATION_PLAN.md
+package-lock.json
+scripts/**
+src/**
+test/**
+tsconfig*.json
+dist/src/**
+dist/scripts/**
+dist/test/**
+dist/**/*.map
+dist/*.vsix
+node_modules/@duckdb/node-api/lib/**
+node_modules/@duckdb/node-api/README.md
+node_modules/**/*.d.ts

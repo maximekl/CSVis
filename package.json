@@ -17,7 +17,7 @@
   "extensionKind": [
     "workspace"
   ],
-  "main": "./dist/src/extension.js",
+  "main": "./dist/extension.js",
   "activationEvents": [
     "onCustomEditor:csvis.csvViewer",
     "onCommand:csvis.openCsvAsTable"
@@ -45,8 +45,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc && npm run build:webview",
+    "compile": "tsc && npm run build:webview && npm run build:extension",
     "build:webview": "node scripts/build-webview.mjs",
+    "build:extension": "node scripts/build-extension.mjs",
+    "package": "node scripts/package-vsix.mjs",
+    "verify:package": "node scripts/verify-vsix.mjs",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "test": "npm run compile && npm run test:unit && node dist/scripts/run-integration-tests.js",
     "test:unit": "node --test dist/test/*.test.js",
@@ -74,6 +77,8 @@
     "@vscode/vsce": "3.9.2",
     "esbuild": "0.28.2",
     "jsdom": "29.1.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "typescript": "5.9.3"
   },
   "engines": {
@@ -81,8 +86,6 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@duckdb/node-api": "1.5.5-r.5",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "@duckdb/node-api": "1.5.5-r.5"
   }
 }
