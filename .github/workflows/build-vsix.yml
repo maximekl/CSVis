@@ -1,11 +1,8 @@
-name: Build and release platform VSIX
+name: Build VSIX for published release
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -43,10 +40,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Check tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: node -e "const version = require('./package.json').version; if (process.env.GITHUB_REF_NAME !== 'v' + version) throw new Error('Tag must match package version v' + version)"
 
       - name: Check runner and native binding
         run: node scripts/check-ci-platform.mjs ${{ matrix.target }}
@@ -87,7 +80,6 @@ jobs:
 
   release:
     name: Attach VSIX to GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-24.04
     permissions:
@@ -104,19 +96,18 @@ jobs:
       - name: Check release assets
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          shopt -s nullglob
+          assets=(dist/*.vsix)
+          test "${#assets[@]}" -eq 3
           for target in darwin-arm64 linux-x64 win32-x64; do
-            test -f "dist/csvis-${version}-${target}.vsix"
+            platform_assets=(dist/*-"$target".vsix)
+            test "${#platform_assets[@]}" -eq 1
           done
 
-      - name: Create release or attach assets
+      - name: Attach VSIX to published release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/*.vsix
-          else
-            gh release create "$GITHUB_REF_NAME" dist/*.vsix --verify-tag --generate-notes
-          fi
+          gh release upload "$GITHUB_REF_NAME" dist/*.vsix
