@@ -1,0 +1,2 @@
+# Keep CSV fixtures byte-for-byte consistent across Git checkouts.
+test/fixtures/*.csv text eol=lf
