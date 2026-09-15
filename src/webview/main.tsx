@@ -7,6 +7,7 @@ import type {
 import { App } from "./App";
 import { applyHostMessage, INITIAL_WEBVIEW_STATE } from "./state";
 import "./styles.css";
+import "./grid/dataGrid.css";
 
 interface VsCodeApi {
   postMessage(message: WebviewToHostMessage): void;

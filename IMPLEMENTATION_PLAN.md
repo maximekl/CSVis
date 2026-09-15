@@ -116,7 +116,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T11 — Construire la grille en colonnes
 
-- [ ] Afficher les colonnes, leurs types, les lignes numérotées, `NULL`, un en-tête fixe, le redimensionnement et le défilement horizontal.
+- [x] Afficher les colonnes, leurs types, les lignes numérotées, `NULL`, un en-tête fixe, le redimensionnement et le défilement horizontal.
 - **Dépendances :** T10.
 - **Livrables :** composant de grille virtualisée et styles basés sur les variables de thème Cursor/VS Code.
 - **Vérification :** tests avec de nombreuses lignes, colonnes et valeurs longues.

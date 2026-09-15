@@ -1,0 +1,118 @@
+.data-grid-viewport {
+  height: min(60vh, 560px);
+  min-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-editor-background);
+}
+
+.data-grid-viewport:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.data-grid-content {
+  position: relative;
+}
+
+.data-grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--vscode-editorGroupHeader-tabsBackground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.data-grid-corner,
+.data-grid-row-number {
+  box-sizing: border-box;
+  position: sticky;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vscode-editorGroupHeader-tabsBackground);
+  border-right: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+}
+
+.data-grid-corner {
+  height: 54px;
+  z-index: 4;
+  font-weight: 600;
+}
+
+.data-grid-row-number {
+  height: 32px;
+  z-index: 2;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-grid-header-cell,
+.data-grid-cell {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--vscode-panel-border);
+}
+
+.data-grid-header-cell {
+  height: 54px;
+  padding: 7px 14px 6px 10px;
+}
+
+.data-grid-column-name,
+.data-grid-column-type {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.data-grid-column-name {
+  font-weight: 600;
+}
+
+.data-grid-column-type {
+  margin-top: 3px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+}
+
+.data-grid-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.data-grid-resize-handle:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: -2px;
+}
+
+.data-grid-row {
+  position: absolute;
+  left: 0;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.data-grid-row-alt {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.data-grid-cell {
+  height: 32px;
+  padding: 6px 10px;
+  line-height: 20px;
+}
+
+.data-grid-null {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}

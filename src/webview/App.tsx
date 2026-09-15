@@ -1,4 +1,5 @@
 import type { WebviewState } from "./state";
+import { DataGrid } from "./grid/DataGrid";
 
 export interface AppProps {
   readonly state: WebviewState;
@@ -23,15 +24,13 @@ export function App({ state }: AppProps): React.JSX.Element {
       {state.error !== undefined ? (
         <p role="alert">{state.error}</p>
       ) : state.result !== undefined ? (
-        <section aria-label="CSV preview" role="status" aria-live="polite">
+        <section aria-label="CSV preview">
           <h2>Preview ready</h2>
-          <p>
+          <p className="muted">
             {state.result.rows.length} rows · {state.result.columns.length}{" "}
             columns
           </p>
-          <p className="muted">
-            {state.result.columns.map((column) => column.name).join(", ")}
-          </p>
+          <DataGrid result={state.result} />
         </section>
       ) : (
         <p role="status" aria-live="polite">Loading CSV preview…</p>

@@ -53,15 +53,18 @@
     "test:query": "npm run compile && node --test dist/test/query*.test.js",
     "test:serialization": "npm run compile && node --test dist/test/resultSerializer.test.js",
     "test:session": "npm run compile && node --test dist/test/csvSession.test.js",
-    "test:webview": "npm run compile && node --test dist/test/webview.test.js"
+    "test:webview": "npm run compile && node --test dist/test/webview.test.js",
+    "test:grid": "npm run compile && node --test dist/test/dataGrid.test.js"
   },
   "devDependencies": {
+    "@types/jsdom": "30.0.0",
     "@types/node": "22.20.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@types/vscode": "1.96.0",
     "@vscode/vsce": "3.9.2",
     "esbuild": "0.28.2",
+    "jsdom": "29.1.1",
     "typescript": "5.9.3"
   },
   "engines": {

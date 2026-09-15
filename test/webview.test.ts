@@ -55,7 +55,9 @@ test("renders loading and then a simulated query result", () => {
   assert.match(readyHtml, /Preview ready/);
   assert.match(readyHtml, /2 rows/);
   assert.match(readyHtml, /2 columns/);
-  assert.match(readyHtml, /id, name/);
+  assert.match(readyHtml, /role="grid"/);
+  assert.match(readyHtml, /role="columnheader"[^>]*title="id · BIGINT"/);
+  assert.match(readyHtml, /title="Alice">Alice/);
   assert.doesNotMatch(readyHtml, /Loading CSV preview/);
 });
 
