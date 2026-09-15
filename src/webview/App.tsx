@@ -1,17 +1,21 @@
 import type { WebviewState } from "./state";
 import { DataGrid } from "./grid/DataGrid";
 import { SqlConsole, type QueryConsoleActions } from "./SqlConsole";
+import { CsvSettingsPanel, type CsvSettingsActions } from "./CsvSettingsPanel";
+
+type AppActions = QueryConsoleActions & CsvSettingsActions;
 
 export interface AppProps {
   readonly state: WebviewState;
-  readonly actions?: QueryConsoleActions;
+  readonly actions?: AppActions;
 }
 
-const NOOP_ACTIONS: QueryConsoleActions = {
+const NOOP_ACTIONS: AppActions = {
   onQueryTextChange: () => undefined,
   onRunQuery: () => undefined,
   onPreviousPage: () => undefined,
   onNextPage: () => undefined,
+  onApplyCsvOptions: () => undefined,
 };
 
 export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Element {
@@ -29,6 +33,7 @@ export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Elem
       <header>
         <h1>{state.fileName}</h1>
       </header>
+      <CsvSettingsPanel state={state} actions={actions} />
       <SqlConsole state={state} actions={actions} />
       {state.result !== undefined ? (
         <section aria-label="CSV preview">

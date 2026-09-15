@@ -134,7 +134,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T13 — Ajouter le panneau de réglages CSV
 
-- [ ] Construire l’interface des réglages et conserver les choix par URI dans `workspaceState`.
+- [x] Construire l’interface des réglages et conserver les choix par URI dans `workspaceState`.
 - **Dépendances :** T06, T09, T10.
 - **Livrables :** formulaire des options CSV et mécanisme de persistance.
 - **Vérification :** modifier les réglages, fermer puis rouvrir le fichier.

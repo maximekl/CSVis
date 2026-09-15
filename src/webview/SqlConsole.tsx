@@ -18,7 +18,9 @@ export function SqlConsole({
   state,
   actions,
 }: SqlConsoleProps): React.JSX.Element {
-  const pending = state.pendingRequestId !== undefined;
+  const pending =
+    state.pendingRequestId !== undefined ||
+    state.pendingSettingsRequestId !== undefined;
   const page = state.result?.page ?? state.page;
   const previousDisabled = pending || state.result === undefined || page === 0;
   const nextDisabled =

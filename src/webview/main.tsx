@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 
 import type {
+  CsvOptions,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from "../shared/protocol";
@@ -8,6 +9,7 @@ import { App } from "./App";
 import {
   applyHostMessage,
   beginQuery,
+  beginSettingsUpdate,
   INITIAL_WEBVIEW_STATE,
   updateQueryText,
   type QueryAction,
@@ -15,6 +17,7 @@ import {
 import "./styles.css";
 import "./grid/dataGrid.css";
 import "./sqlConsole.css";
+import "./csvSettings.css";
 
 interface VsCodeApi {
   postMessage(message: WebviewToHostMessage): void;
@@ -32,6 +35,7 @@ const root = createRoot(rootElement);
 const vscodeApi = acquireVsCodeApi();
 let state = INITIAL_WEBVIEW_STATE;
 let nextRequestNumber = 0;
+let nextSettingsRequestNumber = 0;
 
 const actions = {
   onQueryTextChange: (queryText: string): void => {
@@ -41,6 +45,18 @@ const actions = {
   onRunQuery: (): void => submitQuery("run"),
   onPreviousPage: (): void => submitQuery("previous"),
   onNextPage: (): void => submitQuery("next"),
+  onApplyCsvOptions: (options: CsvOptions): void => {
+    const requestId = `settings-${++nextSettingsRequestNumber}`;
+    const pending = beginSettingsUpdate(state, requestId);
+
+    if (pending === null) {
+      return;
+    }
+
+    state = pending;
+    render();
+    vscodeApi.postMessage({ type: "updateCsvOptions", requestId, options });
+  },
 };
 
 render();
@@ -50,11 +66,21 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
     return;
   }
 
-  state = applyHostMessage(state, event.data);
+  const message = event.data;
+  const previousState = state;
+  state = applyHostMessage(state, message);
   render();
 
-  if (event.data.type === "initialize") {
+  if (message.type === "initialize") {
     submitQuery("run");
+  } else if (
+    (message.type === "csvOptionsUpdated" ||
+      message.type === "csvOptionsError") &&
+    state !== previousState &&
+    state.status === "ready" &&
+    state.pendingSettingsRequestId === undefined
+  ) {
+    submitQuery("reload");
   }
 });
 
@@ -126,7 +152,15 @@ function isHostMessage(value: unknown): value is HostToWebviewMessage {
       return (
         "options" in value &&
         typeof value.options === "object" &&
-        value.options !== null
+        value.options !== null &&
+        (!("requestId" in value) || typeof value.requestId === "string")
+      );
+    case "csvOptionsError":
+      return (
+        "requestId" in value &&
+        typeof value.requestId === "string" &&
+        "message" in value &&
+        typeof value.message === "string"
       );
     default:
       return false;

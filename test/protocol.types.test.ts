@@ -59,6 +59,7 @@ acceptWebviewMessage({
 });
 acceptWebviewMessage({
   type: "updateCsvOptions",
+  requestId: "settings-1",
   options: {
     delimiter: { mode: "manual", value: "\t" },
     header: "absent",

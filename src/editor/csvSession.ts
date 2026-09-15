@@ -10,6 +10,7 @@ import type {
   QueryRequest,
   QueryResult,
 } from "../shared/protocol";
+import { DEFAULT_CSV_OPTIONS } from "../csv/csvOptions";
 
 export class CsvSession {
   private disposed = false;
@@ -23,12 +24,15 @@ export class CsvSession {
     private readonly executor: QueryExecutor,
   ) {}
 
-  public static async create(uri: Uri): Promise<CsvSession> {
+  public static async create(
+    uri: Uri,
+    options: CsvOptions = DEFAULT_CSV_OPTIONS,
+  ): Promise<CsvSession> {
     const database = await DuckDBAdapter.createInMemory();
 
     try {
       const source = new CsvSource(database);
-      await source.replace(uri.fsPath);
+      await source.replace(uri.fsPath, options);
 
       return new CsvSession(
         uri,

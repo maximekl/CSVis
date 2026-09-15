@@ -6,11 +6,15 @@ import {
   OPEN_CSV_COMMAND,
 } from "./editor/csvEditorProvider";
 import { CsvSessionManager } from "./editor/csvSessionManager";
+import { CsvSession } from "./editor/csvSession";
+import { CsvSettingsStore } from "./editor/csvSettingsStore";
 
 export function activate(context: vscode.ExtensionContext): void {
+  const settings = new CsvSettingsStore(context.workspaceState);
   const provider = new CsvEditorProvider(
-    new CsvSessionManager(),
+    new CsvSessionManager((uri) => CsvSession.create(uri, settings.get(uri))),
     context.extensionUri,
+    settings,
   );
   const providerRegistration = vscode.window.registerCustomEditorProvider(
     CSV_EDITOR_VIEW_TYPE,

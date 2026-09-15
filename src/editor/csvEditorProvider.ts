@@ -1,7 +1,7 @@
 import path from "node:path";
 import * as vscode from "vscode";
 
-import { DEFAULT_CSV_OPTIONS } from "../csv/csvOptions";
+import { parseCsvOptions } from "../csv/csvOptions";
 import type {
   HostToWebviewMessage,
   WebviewToHostMessage,
@@ -11,20 +11,32 @@ import {
   CsvSessionManager,
 } from "./csvSessionManager";
 import { executeQueryRequest, isRunQueryMessage } from "./queryMessageHandler";
+import { CsvSettingsStore } from "./csvSettingsStore";
 import { renderWebviewHtml } from "./webviewHtml";
 
 export const CSV_EDITOR_VIEW_TYPE = "csvis.csvViewer";
 export const OPEN_CSV_COMMAND = "csvis.openCsvAsTable";
 const INITIAL_QUERY = "SELECT * FROM csv";
 
+interface PanelEndpoint {
+  readonly webview: vscode.Webview;
+  readonly isClosed: () => boolean;
+}
+
 export class CsvEditorProvider
   implements vscode.CustomReadonlyEditorProvider<CsvCustomDocument>
 {
   private readonly panelResources = new Set<vscode.Disposable>();
+  private readonly panelsByUri = new Map<
+    string,
+    Set<PanelEndpoint>
+  >();
+  private readonly settingsUpdateTails = new Map<string, Promise<void>>();
 
   public constructor(
     private readonly sessions: CsvSessionManager,
     private readonly extensionUri: vscode.Uri,
+    private readonly settings: CsvSettingsStore,
   ) {}
 
   public async openCustomDocument(
@@ -56,6 +68,11 @@ export class CsvEditorProvider
     const fileName = path.basename(document.uri.fsPath);
     let initialized = false;
     let panelClosed = false;
+    const uriKey = document.uri.toString();
+    const panel = { webview, isClosed: () => panelClosed };
+    const openPanels = this.panelsByUri.get(uriKey) ?? new Set<PanelEndpoint>();
+    openPanels.add(panel);
+    this.panelsByUri.set(uriKey, openPanels);
 
     webview.options = {
       enableScripts: true,
@@ -71,7 +88,12 @@ export class CsvEditorProvider
         if (isReadyMessage(value)) {
           if (!initialized) {
             initialized = true;
-            void this.initializePanel(webview, fileName, () => panelClosed);
+            void this.initializePanel(
+              document.uri,
+              webview,
+              fileName,
+              () => panelClosed,
+            );
           }
 
           return;
@@ -84,6 +106,13 @@ export class CsvEditorProvider
             value.request,
             () => panelClosed,
           );
+        } else if (initialized && isUpdateCsvOptionsMessage(value)) {
+          void this.enqueueSettingsUpdate(
+            document,
+            panel,
+            value.requestId,
+            value.options,
+          );
         }
       },
     );
@@ -93,6 +122,12 @@ export class CsvEditorProvider
         panelClosed = true;
         messageSubscription.dispose();
         closeSubscription?.dispose();
+        openPanels.delete(panel);
+
+        if (openPanels.size === 0) {
+          this.panelsByUri.delete(uriKey);
+        }
+
         this.panelResources.delete(panelResource);
       },
     };
@@ -123,6 +158,7 @@ export class CsvEditorProvider
   }
 
   private async initializePanel(
+    uri: vscode.Uri,
     webview: vscode.Webview,
     fileName: string,
     isClosed: () => boolean,
@@ -130,7 +166,7 @@ export class CsvEditorProvider
     const initializeMessage: HostToWebviewMessage = {
       type: "initialize",
       fileName,
-      options: DEFAULT_CSV_OPTIONS,
+      options: this.settings.get(uri),
       initialQuery: INITIAL_QUERY,
     };
 
@@ -164,6 +200,77 @@ export class CsvEditorProvider
       }
     }
   }
+
+  private enqueueSettingsUpdate(
+    document: CsvCustomDocument,
+    panel: PanelEndpoint,
+    requestId: string,
+    options: unknown,
+  ): Promise<void> {
+    const key = document.uri.toString();
+    const previous = this.settingsUpdateTails.get(key) ?? Promise.resolve();
+    const update = previous.then(() =>
+      this.applySettingsUpdate(document, panel, requestId, options),
+    );
+    const tail = update.then(() => undefined, () => undefined);
+    this.settingsUpdateTails.set(key, tail);
+    void tail.then(() => {
+      if (this.settingsUpdateTails.get(key) === tail) {
+        this.settingsUpdateTails.delete(key);
+      }
+    });
+    return update;
+  }
+
+  private async applySettingsUpdate(
+    document: CsvCustomDocument,
+    panel: PanelEndpoint,
+    requestId: string,
+    options: unknown,
+  ): Promise<void> {
+    const previousOptions = this.settings.get(document.uri);
+
+    try {
+      const validated = parseCsvOptions(options);
+      await document.session.updateOptions(validated);
+
+      try {
+        await this.settings.set(document.uri, validated);
+      } catch (error: unknown) {
+        await document.session.updateOptions(previousOptions);
+        throw error;
+      }
+
+      for (const openPanel of this.panelsByUri.get(document.uri.toString()) ?? []) {
+        await this.postPanelMessage(openPanel, {
+          type: "csvOptionsUpdated",
+          options: validated,
+          ...(openPanel === panel ? { requestId } : {}),
+        });
+      }
+    } catch (error: unknown) {
+      await this.postPanelMessage(panel, {
+        type: "csvOptionsError",
+        requestId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async postPanelMessage(
+    panel: PanelEndpoint,
+    message: HostToWebviewMessage,
+  ): Promise<void> {
+    if (panel.isClosed()) {
+      return;
+    }
+
+    try {
+      await panel.webview.postMessage(message);
+    } catch {
+      // A panel may close while a settings response is being sent.
+    }
+  }
 }
 
 function isReadyMessage(
@@ -174,5 +281,20 @@ function isReadyMessage(
     value !== null &&
     "type" in value &&
     value.type === "ready"
+  );
+}
+
+function isUpdateCsvOptionsMessage(
+  value: unknown,
+): value is Extract<WebviewToHostMessage, { readonly type: "updateCsvOptions" }> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "updateCsvOptions" &&
+    "options" in value &&
+    "requestId" in value &&
+    typeof value.requestId === "string" &&
+    value.requestId.length > 0
   );
 }

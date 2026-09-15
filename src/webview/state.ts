@@ -6,7 +6,7 @@ import type {
 } from "../shared/protocol";
 
 export const QUERY_PAGE_SIZE = 200;
-export type QueryAction = "run" | "previous" | "next";
+export type QueryAction = "run" | "reload" | "previous" | "next";
 
 export type WebviewState =
   | { readonly status: "loading" }
@@ -19,6 +19,8 @@ export type WebviewState =
       readonly executedSql: string;
       readonly page: number;
       readonly pendingRequestId?: string;
+      readonly pendingSettingsRequestId?: string;
+      readonly settingsError?: string;
       readonly result?: QueryResult;
       readonly error?: string;
     };
@@ -76,8 +78,49 @@ export function applyHostMessage(
         error: message.message,
       };
     case "csvOptionsUpdated":
-      return { ...state, options: message.options };
+      return {
+        ...state,
+        options: message.options,
+        page: 0,
+        pendingRequestId: undefined,
+        pendingSettingsRequestId:
+          message.requestId === state.pendingSettingsRequestId
+            ? undefined
+            : state.pendingSettingsRequestId,
+        settingsError: undefined,
+        result: undefined,
+        error: undefined,
+      };
+    case "csvOptionsError":
+      if (message.requestId !== state.pendingSettingsRequestId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pendingSettingsRequestId: undefined,
+        settingsError: message.message,
+      };
   }
+}
+
+export function beginSettingsUpdate(
+  state: WebviewState,
+  requestId: string,
+): WebviewState | null {
+  if (state.status !== "ready" || state.pendingSettingsRequestId !== undefined) {
+    return null;
+  }
+
+  return {
+    ...state,
+    page: 0,
+    pendingRequestId: undefined,
+    pendingSettingsRequestId: requestId,
+    settingsError: undefined,
+    result: undefined,
+    error: undefined,
+  };
 }
 
 export function updateQueryText(
@@ -92,7 +135,11 @@ export function beginQuery(
   action: QueryAction,
   requestId: string,
 ): { readonly state: WebviewState; readonly request: QueryRequest } | null {
-  if (state.status !== "ready" || state.pendingRequestId !== undefined) {
+  if (
+    state.status !== "ready" ||
+    state.pendingRequestId !== undefined ||
+    state.pendingSettingsRequestId !== undefined
+  ) {
     return null;
   }
 
@@ -102,6 +149,10 @@ export function beginQuery(
   switch (action) {
     case "run":
       sql = state.queryText;
+      page = 0;
+      break;
+    case "reload":
+      sql = state.executedSql;
       page = 0;
       break;
     case "previous":

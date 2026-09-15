@@ -44,7 +44,11 @@ export interface QueryResult {
 export type WebviewToHostMessage =
   | { readonly type: "ready" }
   | { readonly type: "runQuery"; readonly request: QueryRequest }
-  | { readonly type: "updateCsvOptions"; readonly options: CsvOptions };
+  | {
+      readonly type: "updateCsvOptions";
+      readonly requestId: string;
+      readonly options: CsvOptions;
+    };
 
 export type HostToWebviewMessage =
   | {
@@ -62,4 +66,10 @@ export type HostToWebviewMessage =
   | {
       readonly type: "csvOptionsUpdated";
       readonly options: CsvOptions;
+      readonly requestId?: string;
+    }
+  | {
+      readonly type: "csvOptionsError";
+      readonly requestId: string;
+      readonly message: string;
     };
