@@ -10,6 +10,7 @@ import {
   CsvCustomDocument,
   CsvSessionManager,
 } from "./csvSessionManager";
+import { CsvFileMonitor } from "./csvFileMonitor";
 import { executeQueryRequest, isRunQueryMessage } from "./queryMessageHandler";
 import { CsvSettingsStore } from "./csvSettingsStore";
 import { renderWebviewHtml } from "./webviewHtml";
@@ -27,11 +28,9 @@ export class CsvEditorProvider
   implements vscode.CustomReadonlyEditorProvider<CsvCustomDocument>
 {
   private readonly panelResources = new Set<vscode.Disposable>();
-  private readonly panelsByUri = new Map<
-    string,
-    Set<PanelEndpoint>
-  >();
+  private readonly panelsByUri = new Map<string, Set<PanelEndpoint>>();
   private readonly settingsUpdateTails = new Map<string, Promise<void>>();
+  private readonly monitorsByUri = new Map<string, CsvFileMonitor>();
 
   public constructor(
     private readonly sessions: CsvSessionManager,
@@ -73,6 +72,7 @@ export class CsvEditorProvider
     const openPanels = this.panelsByUri.get(uriKey) ?? new Set<PanelEndpoint>();
     openPanels.add(panel);
     this.panelsByUri.set(uriKey, openPanels);
+    this.ensureFileMonitor(document);
 
     webview.options = {
       enableScripts: true,
@@ -89,7 +89,7 @@ export class CsvEditorProvider
           if (!initialized) {
             initialized = true;
             void this.initializePanel(
-              document.uri,
+              document,
               webview,
               fileName,
               () => panelClosed,
@@ -126,6 +126,8 @@ export class CsvEditorProvider
 
         if (openPanels.size === 0) {
           this.panelsByUri.delete(uriKey);
+          this.monitorsByUri.get(uriKey)?.dispose();
+          this.monitorsByUri.delete(uriKey);
         }
 
         this.panelResources.delete(panelResource);
@@ -158,7 +160,7 @@ export class CsvEditorProvider
   }
 
   private async initializePanel(
-    uri: vscode.Uri,
+    document: CsvCustomDocument,
     webview: vscode.Webview,
     fileName: string,
     isClosed: () => boolean,
@@ -166,8 +168,13 @@ export class CsvEditorProvider
     const initializeMessage: HostToWebviewMessage = {
       type: "initialize",
       fileName,
-      options: this.settings.get(uri),
+      options: this.settings.get(document.uri),
       initialQuery: INITIAL_QUERY,
+      fileStatus: document.session.currentFileStatus,
+      fileRevision: document.session.currentFileRevision,
+      ...(document.session.currentFileMessage === undefined
+        ? {}
+        : { fileMessage: document.session.currentFileMessage }),
     };
 
     if (isClosed()) {
@@ -190,15 +197,55 @@ export class CsvEditorProvider
     >["request"],
     isClosed: () => boolean,
   ): Promise<void> {
+    const fileRevision = document.session.currentFileRevision;
     const response = await executeQueryRequest(document.session, request);
 
-    if (!isClosed()) {
+    if (
+      !isClosed() &&
+      fileRevision === document.session.currentFileRevision &&
+      document.session.currentFileStatus === "ready"
+    ) {
       try {
         await webview.postMessage(response);
       } catch {
         // The panel may have closed while the result was being sent.
       }
     }
+  }
+
+  private ensureFileMonitor(document: CsvCustomDocument): void {
+    const key = document.uri.toString();
+
+    if (this.monitorsByUri.has(key)) {
+      return;
+    }
+
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(
+        vscode.Uri.file(path.dirname(document.uri.fsPath)),
+        path.basename(document.uri.fsPath),
+      ),
+    );
+    const monitor = new CsvFileMonitor(
+      document.session,
+      watcher,
+      () => this.settings.get(document.uri),
+      (message) => {
+        void this.broadcastFileStatus(key, message);
+      },
+    );
+    this.monitorsByUri.set(key, monitor);
+  }
+
+  private async broadcastFileStatus(
+    key: string,
+    message: Extract<HostToWebviewMessage, { readonly type: "fileStatus" }>,
+  ): Promise<void> {
+    await Promise.all(
+      [...(this.panelsByUri.get(key) ?? [])].map((panel) =>
+        this.postPanelMessage(panel, message),
+      ),
+    );
   }
 
   private enqueueSettingsUpdate(

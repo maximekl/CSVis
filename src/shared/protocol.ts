@@ -12,6 +12,8 @@ export interface CsvOptions {
   readonly encoding: CsvEncoding;
 }
 
+export type CsvFileStatus = "ready" | "reloading" | "missing" | "error";
+
 export interface ColumnMetadata {
   readonly name: string;
   readonly type: string;
@@ -56,6 +58,9 @@ export type HostToWebviewMessage =
       readonly fileName: string;
       readonly options: CsvOptions;
       readonly initialQuery: string;
+      readonly fileStatus?: CsvFileStatus;
+      readonly fileRevision?: number;
+      readonly fileMessage?: string;
     }
   | { readonly type: "queryResult"; readonly result: QueryResult }
   | {
@@ -72,4 +77,10 @@ export type HostToWebviewMessage =
       readonly type: "csvOptionsError";
       readonly requestId: string;
       readonly message: string;
+    }
+  | {
+      readonly type: "fileStatus";
+      readonly status: CsvFileStatus;
+      readonly revision: number;
+      readonly message?: string;
     };

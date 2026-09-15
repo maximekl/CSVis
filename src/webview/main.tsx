@@ -71,7 +71,11 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
   state = applyHostMessage(state, message);
   render();
 
-  if (message.type === "initialize") {
+  if (
+    message.type === "initialize" &&
+    state.status === "ready" &&
+    state.fileStatus === "ready"
+  ) {
     submitQuery("run");
   } else if (
     (message.type === "csvOptionsUpdated" ||
@@ -79,6 +83,13 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
     state !== previousState &&
     state.status === "ready" &&
     state.pendingSettingsRequestId === undefined
+  ) {
+    submitQuery("reload");
+  } else if (
+    message.type === "fileStatus" &&
+    message.status === "ready" &&
+    state !== previousState &&
+    state.status === "ready"
   ) {
     submitQuery("reload");
   }
@@ -121,7 +132,19 @@ function isHostMessage(value: unknown): value is HostToWebviewMessage {
         typeof value.initialQuery === "string" &&
         "options" in value &&
         typeof value.options === "object" &&
-        value.options !== null
+        value.options !== null &&
+        (!("fileStatus" in value) ||
+          value.fileStatus === "ready" ||
+          value.fileStatus === "reloading" ||
+          value.fileStatus === "missing" ||
+          value.fileStatus === "error") &&
+        (!("fileRevision" in value) ||
+          (typeof value.fileRevision === "number" &&
+            Number.isSafeInteger(value.fileRevision) &&
+            value.fileRevision >= 0)) &&
+        (!("fileMessage" in value) ||
+          value.fileMessage === undefined ||
+          typeof value.fileMessage === "string")
       );
     case "queryResult":
       return (
@@ -161,6 +184,21 @@ function isHostMessage(value: unknown): value is HostToWebviewMessage {
         typeof value.requestId === "string" &&
         "message" in value &&
         typeof value.message === "string"
+      );
+    case "fileStatus":
+      return (
+        "status" in value &&
+        (value.status === "ready" ||
+          value.status === "reloading" ||
+          value.status === "missing" ||
+          value.status === "error") &&
+        "revision" in value &&
+        Number.isSafeInteger(value.revision) &&
+        typeof value.revision === "number" &&
+        value.revision >= 0 &&
+        (!("message" in value) ||
+          value.message === undefined ||
+          typeof value.message === "string")
       );
     default:
       return false;

@@ -56,7 +56,8 @@
     "test:webview": "npm run compile && node --test dist/test/webview.test.js",
     "test:grid": "npm run compile && node --test dist/test/dataGrid.test.js",
     "test:console": "npm run compile && node --test dist/test/sqlConsole.test.js",
-    "test:settings": "npm run compile && node --test dist/test/csvSettings.test.js"
+    "test:settings": "npm run compile && node --test dist/test/csvSettings.test.js",
+    "test:file": "npm run compile && node --test dist/test/csvFileMonitor.test.js"
   },
   "devDependencies": {
     "@types/jsdom": "30.0.0",

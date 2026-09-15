@@ -82,6 +82,12 @@ acceptHostMessage({
   requestId: "query-2",
   message: "Invalid query",
 });
+acceptHostMessage({
+  type: "fileStatus",
+  status: "missing",
+  revision: 2,
+  message: "CSV file was deleted",
+});
 
 acceptCsvOptions({
   delimiter: { mode: "auto" },

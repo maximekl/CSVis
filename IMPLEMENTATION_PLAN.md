@@ -143,7 +143,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T14 — Gérer les changements du fichier
 
-- [ ] Surveiller la modification, la suppression et la recréation du CSV, puis recharger ou afficher un état explicite.
+- [x] Surveiller la modification, la suppression et la recréation du CSV, puis recharger ou afficher un état explicite.
 - **Dépendances :** T09, T12, T13.
 - **Livrables :** surveillance du fichier et invalidation des requêtes obsolètes.
 - **Vérification :** modifier et supprimer une fixture pendant que l’éditeur est ouvert.

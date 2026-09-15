@@ -33,6 +33,21 @@ export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Elem
       <header>
         <h1>{state.fileName}</h1>
       </header>
+      {state.fileStatus === "reloading" && (
+        <p className="file-status" role="status" aria-live="polite">
+          CSV file changed. Reloading…
+        </p>
+      )}
+      {state.fileStatus === "missing" && (
+        <p className="file-status file-status-error" role="alert">
+          {state.fileMessage ?? "CSV file was deleted. Waiting for it to be recreated."}
+        </p>
+      )}
+      {state.fileStatus === "error" && (
+        <p className="file-status file-status-error" role="alert">
+          CSV reload failed: {state.fileMessage ?? "Unknown error"}
+        </p>
+      )}
       <CsvSettingsPanel state={state} actions={actions} />
       <SqlConsole state={state} actions={actions} />
       {state.result !== undefined ? (

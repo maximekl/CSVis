@@ -23,6 +23,7 @@ export function CsvSettingsPanel({
   }, [state.options]);
 
   const pending = state.pendingSettingsRequestId !== undefined;
+  const unavailable = state.fileStatus !== "ready";
   const dirty = JSON.stringify(draft) !== JSON.stringify(state.options);
 
   return (
@@ -33,7 +34,7 @@ export function CsvSettingsPanel({
         onSubmit={(event) => {
           event.preventDefault();
 
-          if (dirty && !pending) {
+          if (dirty && !pending && !unavailable) {
             actions.onApplyCsvOptions(draft);
           }
         }}
@@ -42,7 +43,7 @@ export function CsvSettingsPanel({
         <select
           id="csvis-delimiter-mode"
           value={draft.delimiter.mode}
-          disabled={pending}
+          disabled={pending || unavailable}
           onChange={(event) =>
             setDraft({
               ...draft,
@@ -69,7 +70,7 @@ export function CsvSettingsPanel({
               id="csvis-delimiter-value"
               type="text"
               value={draft.delimiter.value}
-              disabled={pending}
+              disabled={pending || unavailable}
               onChange={(event) =>
                 setDraft({
                   ...draft,
@@ -83,7 +84,7 @@ export function CsvSettingsPanel({
         <select
           id="csvis-header-mode"
           value={draft.header}
-          disabled={pending}
+          disabled={pending || unavailable}
           onChange={(event) =>
             setDraft({
               ...draft,
@@ -99,7 +100,7 @@ export function CsvSettingsPanel({
         <select
           id="csvis-encoding"
           value={draft.encoding}
-          disabled={pending}
+          disabled={pending || unavailable}
           onChange={(event) =>
             setDraft({
               ...draft,
@@ -111,7 +112,7 @@ export function CsvSettingsPanel({
           <option value="utf-16">UTF-16</option>
           <option value="latin-1">Latin-1</option>
         </select>
-        <button type="submit" disabled={!dirty || pending}>
+        <button type="submit" disabled={!dirty || pending || unavailable}>
           {pending ? "Applying…" : "Apply settings"}
         </button>
       </form>

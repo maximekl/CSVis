@@ -20,7 +20,16 @@ export function SqlConsole({
 }: SqlConsoleProps): React.JSX.Element {
   const pending =
     state.pendingRequestId !== undefined ||
-    state.pendingSettingsRequestId !== undefined;
+    state.pendingSettingsRequestId !== undefined ||
+    state.fileStatus !== "ready";
+  const runLabel =
+    state.fileStatus !== "ready"
+      ? "CSV unavailable"
+      : state.pendingSettingsRequestId !== undefined
+        ? "Applying…"
+        : state.pendingRequestId !== undefined
+          ? "Running…"
+          : "Run query";
   const page = state.result?.page ?? state.page;
   const previousDisabled = pending || state.result === undefined || page === 0;
   const nextDisabled =
@@ -57,7 +66,7 @@ export function SqlConsole({
           disabled={pending}
           onClick={actions.onRunQuery}
         >
-          {pending ? "Running…" : "Run query"}
+          {runLabel}
         </button>
         <span className="sql-console-hint">Cmd/Ctrl+Enter</span>
         <div className="sql-console-pagination" aria-label="Pagination">

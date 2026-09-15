@@ -1,4 +1,5 @@
 import type {
+  CsvFileStatus,
   CsvOptions,
   HostToWebviewMessage,
   QueryRequest,
@@ -15,6 +16,9 @@ export type WebviewState =
       readonly fileName: string;
       readonly initialQuery: string;
       readonly options: CsvOptions;
+      readonly fileStatus: CsvFileStatus;
+      readonly fileRevision: number;
+      readonly fileMessage?: string;
       readonly queryText: string;
       readonly executedSql: string;
       readonly page: number;
@@ -37,6 +41,9 @@ export function applyHostMessage(
       fileName: message.fileName,
       initialQuery: message.initialQuery,
       options: message.options,
+      fileStatus: message.fileStatus ?? "ready",
+      fileRevision: message.fileRevision ?? 0,
+      fileMessage: message.fileMessage,
       queryText: message.initialQuery,
       executedSql: message.initialQuery,
       page: 0,
@@ -50,6 +57,7 @@ export function applyHostMessage(
   switch (message.type) {
     case "queryResult":
       if (
+        state.fileStatus !== "ready" ||
         state.pendingRequestId === undefined ||
         message.result.requestId !== state.pendingRequestId
       ) {
@@ -65,6 +73,7 @@ export function applyHostMessage(
       };
     case "queryError":
       if (
+        state.fileStatus !== "ready" ||
         state.pendingRequestId === undefined ||
         message.requestId !== state.pendingRequestId
       ) {
@@ -100,6 +109,28 @@ export function applyHostMessage(
         ...state,
         pendingSettingsRequestId: undefined,
         settingsError: message.message,
+      };
+    case "fileStatus":
+      if (
+        message.revision < state.fileRevision ||
+        (message.revision === state.fileRevision &&
+          state.fileStatus !== "reloading") ||
+        (message.revision === state.fileRevision &&
+          message.status === state.fileStatus &&
+          message.message === state.fileMessage)
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        fileStatus: message.status,
+        fileRevision: message.revision,
+        fileMessage: message.message,
+        page: 0,
+        pendingRequestId: undefined,
+        result: undefined,
+        error: undefined,
       };
   }
 }
@@ -138,7 +169,8 @@ export function beginQuery(
   if (
     state.status !== "ready" ||
     state.pendingRequestId !== undefined ||
-    state.pendingSettingsRequestId !== undefined
+    state.pendingSettingsRequestId !== undefined ||
+    state.fileStatus !== "ready"
   ) {
     return null;
   }
