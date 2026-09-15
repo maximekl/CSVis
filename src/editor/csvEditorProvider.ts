@@ -10,12 +10,12 @@ import {
   CsvCustomDocument,
   CsvSessionManager,
 } from "./csvSessionManager";
+import { executeQueryRequest, isRunQueryMessage } from "./queryMessageHandler";
 import { renderWebviewHtml } from "./webviewHtml";
 
 export const CSV_EDITOR_VIEW_TYPE = "csvis.csvViewer";
 export const OPEN_CSV_COMMAND = "csvis.openCsvAsTable";
 const INITIAL_QUERY = "SELECT * FROM csv";
-const INITIAL_REQUEST_ID = "initial-preview";
 
 export class CsvEditorProvider
   implements vscode.CustomReadonlyEditorProvider<CsvCustomDocument>
@@ -64,17 +64,27 @@ export class CsvEditorProvider
 
     const messageSubscription = webview.onDidReceiveMessage(
       (value: unknown) => {
-        if (!isReadyMessage(value) || initialized || panelClosed) {
+        if (panelClosed) {
           return;
         }
 
-        initialized = true;
-        void this.initializePanel(
-          document,
-          webview,
-          fileName,
-          () => panelClosed,
-        );
+        if (isReadyMessage(value)) {
+          if (!initialized) {
+            initialized = true;
+            void this.initializePanel(webview, fileName, () => panelClosed);
+          }
+
+          return;
+        }
+
+        if (initialized && isRunQueryMessage(value)) {
+          void this.executePanelQuery(
+            document,
+            webview,
+            value.request,
+            () => panelClosed,
+          );
+        }
       },
     );
     let closeSubscription: vscode.Disposable | undefined;
@@ -113,7 +123,6 @@ export class CsvEditorProvider
   }
 
   private async initializePanel(
-    document: CsvCustomDocument,
     webview: vscode.Webview,
     fileName: string,
     isClosed: () => boolean,
@@ -130,36 +139,28 @@ export class CsvEditorProvider
     }
 
     try {
-      if (!(await webview.postMessage(initializeMessage)) || isClosed()) {
-        return;
-      }
+      await webview.postMessage(initializeMessage);
+    } catch {
+      // The panel may have closed while initialization was being sent.
+    }
+  }
 
-      const result = await document.session.executeQuery({
-        requestId: INITIAL_REQUEST_ID,
-        sql: INITIAL_QUERY,
-        page: 0,
-        pageSize: 200,
-      });
+  private async executePanelQuery(
+    document: CsvCustomDocument,
+    webview: vscode.Webview,
+    request: Extract<
+      WebviewToHostMessage,
+      { readonly type: "runQuery" }
+    >["request"],
+    isClosed: () => boolean,
+  ): Promise<void> {
+    const response = await executeQueryRequest(document.session, request);
 
-      if (!isClosed()) {
-        const resultMessage: HostToWebviewMessage = {
-          type: "queryResult",
-          result,
-        };
-        await webview.postMessage(resultMessage);
-      }
-    } catch (error: unknown) {
-      if (!isClosed()) {
-        const errorMessage: HostToWebviewMessage = {
-          type: "queryError",
-          requestId: INITIAL_REQUEST_ID,
-          message: error instanceof Error ? error.message : String(error),
-        };
-        try {
-          await webview.postMessage(errorMessage);
-        } catch {
-          // The panel may have closed while the error was being reported.
-        }
+    if (!isClosed()) {
+      try {
+        await webview.postMessage(response);
+      } catch {
+        // The panel may have closed while the result was being sent.
       }
     }
   }

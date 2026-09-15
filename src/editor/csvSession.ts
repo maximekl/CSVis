@@ -13,6 +13,8 @@ import type {
 
 export class CsvSession {
   private disposed = false;
+  private pendingOperations = 0;
+  private operationTail: Promise<void> = Promise.resolve();
 
   private constructor(
     public readonly uri: Uri,
@@ -42,14 +44,16 @@ export class CsvSession {
 
   public async executeQuery(request: QueryRequest): Promise<QueryResult> {
     this.assertOpen();
-    return serializeQueryPage(await this.executor.execute(request));
+    return this.enqueue(async () =>
+      serializeQueryPage(await this.executor.execute(request)),
+    );
   }
 
   public async updateOptions(
     options: CsvOptions,
   ): Promise<readonly ColumnMetadata[]> {
     this.assertOpen();
-    return this.source.replace(this.uri.fsPath, options);
+    return this.enqueue(() => this.source.replace(this.uri.fsPath, options));
   }
 
   public dispose(): void {
@@ -58,7 +62,29 @@ export class CsvSession {
     }
 
     this.disposed = true;
-    this.database.dispose();
+
+    if (this.pendingOperations === 0) {
+      this.database.dispose();
+    }
+  }
+
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    this.pendingOperations += 1;
+
+    const result = this.operationTail.then(() => {
+      this.assertOpen();
+      return operation();
+    });
+    this.operationTail = result.then(() => undefined, () => undefined);
+    void this.operationTail.then(() => {
+      this.pendingOperations -= 1;
+
+      if (this.disposed && this.pendingOperations === 0) {
+        this.database.dispose();
+      }
+    });
+
+    return result;
   }
 
   private assertOpen(): void {

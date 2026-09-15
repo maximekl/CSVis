@@ -54,7 +54,8 @@
     "test:serialization": "npm run compile && node --test dist/test/resultSerializer.test.js",
     "test:session": "npm run compile && node --test dist/test/csvSession.test.js",
     "test:webview": "npm run compile && node --test dist/test/webview.test.js",
-    "test:grid": "npm run compile && node --test dist/test/dataGrid.test.js"
+    "test:grid": "npm run compile && node --test dist/test/dataGrid.test.js",
+    "test:console": "npm run compile && node --test dist/test/sqlConsole.test.js"
   },
   "devDependencies": {
     "@types/jsdom": "30.0.0",

@@ -5,9 +5,16 @@ import type {
   WebviewToHostMessage,
 } from "../shared/protocol";
 import { App } from "./App";
-import { applyHostMessage, INITIAL_WEBVIEW_STATE } from "./state";
+import {
+  applyHostMessage,
+  beginQuery,
+  INITIAL_WEBVIEW_STATE,
+  updateQueryText,
+  type QueryAction,
+} from "./state";
 import "./styles.css";
 import "./grid/dataGrid.css";
+import "./sqlConsole.css";
 
 interface VsCodeApi {
   postMessage(message: WebviewToHostMessage): void;
@@ -24,8 +31,19 @@ if (rootElement === null) {
 const root = createRoot(rootElement);
 const vscodeApi = acquireVsCodeApi();
 let state = INITIAL_WEBVIEW_STATE;
+let nextRequestNumber = 0;
 
-root.render(<App state={state} />);
+const actions = {
+  onQueryTextChange: (queryText: string): void => {
+    state = updateQueryText(state, queryText);
+    render();
+  },
+  onRunQuery: (): void => submitQuery("run"),
+  onPreviousPage: (): void => submitQuery("previous"),
+  onNextPage: (): void => submitQuery("next"),
+};
+
+render();
 
 window.addEventListener("message", (event: MessageEvent<unknown>) => {
   if (!isHostMessage(event.data)) {
@@ -33,10 +51,35 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
   }
 
   state = applyHostMessage(state, event.data);
-  root.render(<App state={state} />);
+  render();
+
+  if (event.data.type === "initialize") {
+    submitQuery("run");
+  }
 });
 
 vscodeApi.postMessage({ type: "ready" });
+
+function render(): void {
+  root.render(<App state={state} actions={actions} />);
+}
+
+function submitQuery(action: QueryAction): void {
+  const attempt = beginQuery(
+    state,
+    action,
+    `query-${nextRequestNumber + 1}`,
+  );
+
+  if (attempt === null) {
+    return;
+  }
+
+  nextRequestNumber += 1;
+  state = attempt.state;
+  render();
+  vscodeApi.postMessage({ type: "runQuery", request: attempt.request });
+}
 
 function isHostMessage(value: unknown): value is HostToWebviewMessage {
   if (typeof value !== "object" || value === null || !("type" in value)) {
@@ -59,10 +102,18 @@ function isHostMessage(value: unknown): value is HostToWebviewMessage {
         "result" in value &&
         typeof value.result === "object" &&
         value.result !== null &&
+        "requestId" in value.result &&
+        typeof value.result.requestId === "string" &&
         "columns" in value.result &&
         Array.isArray(value.result.columns) &&
         "rows" in value.result &&
-        Array.isArray(value.result.rows)
+        Array.isArray(value.result.rows) &&
+        "page" in value.result &&
+        typeof value.result.page === "number" &&
+        "pageSize" in value.result &&
+        typeof value.result.pageSize === "number" &&
+        "hasNextPage" in value.result &&
+        typeof value.result.hasNextPage === "boolean"
       );
     case "queryError":
       return (

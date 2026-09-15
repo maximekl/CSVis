@@ -125,7 +125,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T12 — Ajouter la console pseudo-SQL
 
-- [ ] Ajouter la requête initiale `SELECT * FROM csv`, le bouton d’exécution, `Cmd/Ctrl+Enter`, les erreurs et les boutons précédent/suivant.
+- [x] Ajouter la requête initiale `SELECT * FROM csv`, le bouton d’exécution, `Cmd/Ctrl+Enter`, les erreurs et les boutons précédent/suivant.
 - **Dépendances :** T07, T09, T10, T11.
 - **Livrables :** éditeur de requête, état d’exécution et contrôles de pagination.
 - **Vérification :** exécuter une sélection, un filtre, une agrégation et naviguer entre deux pages.

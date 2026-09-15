@@ -10,6 +10,7 @@ import type { QueryResult } from "../src/shared/protocol";
 import { App } from "../src/webview/App";
 import {
   applyHostMessage,
+  beginQuery,
   INITIAL_WEBVIEW_STATE,
 } from "../src/webview/state";
 
@@ -43,7 +44,9 @@ test("renders loading and then a simulated query result", () => {
     pageSize: 200,
     hasNextPage: false,
   };
-  const readyState = applyHostMessage(initializedState, {
+  const initialRequest = beginQuery(initializedState, "run", "simulated");
+  assert.ok(initialRequest);
+  const readyState = applyHostMessage(initialRequest.state, {
     type: "queryResult",
     result,
   });
@@ -55,6 +58,8 @@ test("renders loading and then a simulated query result", () => {
   assert.match(readyHtml, /Preview ready/);
   assert.match(readyHtml, /2 rows/);
   assert.match(readyHtml, /2 columns/);
+  assert.match(readyHtml, /<textarea[^>]*>SELECT \* FROM csv<\/textarea>/);
+  assert.match(readyHtml, /Run query/);
   assert.match(readyHtml, /role="grid"/);
   assert.match(readyHtml, /role="columnheader"[^>]*title="id · BIGINT"/);
   assert.match(readyHtml, /title="Alice">Alice/);
