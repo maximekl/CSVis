@@ -62,24 +62,3 @@ npm run verify:package
 Au premier lancement des tests d’intégration ou de `verify:package`, le harnais télécharge VS Code si aucune version n’est encore en cache ; prévoyez donc un accès réseau. Pour `npm test` et `npm run test:integration` en environnement hors ligne, `CSVIS_VSCODE_EXECUTABLE_PATH` peut désigner un exécutable VS Code déjà installé. Pour choisir une version VS Code mise en cache, utilisez `CSVIS_VSCODE_VERSION`.
 
 Le code de l’Extension Host est dans `src/extension.ts`, la session CSV et l’éditeur personnalisé dans `src/editor/`, la source CSV et les options dans `src/csv/`, la validation et la pagination SQL dans `src/query/`, et l’interface React dans `src/webview/`. `src/shared/protocol.ts` définit les messages échangés entre l’Extension Host et la webview. Le packaging est réalisé par `scripts/package-vsix.mjs` ; le workflow multiplateforme se trouve dans `.github/workflows/build-vsix.yml`.
-
-## Recette manuelle dans Cursor
-
-À réaliser sur la plateforme du VSIX, avec un CSV réel dont vous connaissez au moins un total attendu :
-
-1. Installez le VSIX via **Extensions: Install from VSIX…** et vérifiez que **CSVis** apparaît dans les extensions installées.
-2. Ouvrez le CSV et vérifiez que la grille CSVis s’affiche par défaut, avec ses colonnes et la première page de données.
-3. Exécutez `SELECT count(*) AS lignes FROM csv`, puis une agrégation sur une colonne numérique du fichier ; comparez les résultats à vos valeurs attendues.
-4. Essayez un filtre ou un tri, puis, si le fichier a plus de 200 lignes, passez à la page suivante et revenez à la précédente.
-5. Corrigez si nécessaire le séparateur, l’en-tête ou l’encodage ; fermez et rouvrez le CSV pour vérifier la persistance des réglages.
-6. Lancez **View: Reopen Editor With…** → **Text Editor** et vérifiez que le contenu CSV d’origine est visible et inchangé.
-
-Pour un essai déterministe sans CSV métier, `test/fixtures/comma.csv` contient deux lignes ; `SELECT count(*) AS lignes, sum(score) AS total FROM csv` doit donner `2` et `30.75`. Cet exemple ne remplace pas la recette avec un CSV réel.
-
-Un CSV d’observations météo publiques est aussi disponible dans le [jeu de données Vega](https://github.com/vega/vega-datasets/blob/2434f551e0bb12b99a4ce6764fbc0ef39bea145e/data/seattle-weather.csv). Téléchargez cette révision figée dans un dossier temporaire, puis ouvrez-la dans Cursor :
-
-```sh
-curl -fL https://raw.githubusercontent.com/vega/vega-datasets/2434f551e0bb12b99a4ce6764fbc0ef39bea145e/data/seattle-weather.csv -o /tmp/seattle-weather.csv
-```
-
-Avec `SELECT count(*) AS jours, count(*) FILTER (WHERE precipitation > 0) AS jours_pluie FROM csv`, les résultats attendus sont `1461` jours et `623` jours de pluie. Le scénario automatisé optionnel peut être lancé avec `CSVIS_RECIPE_WEATHER_CSV_PATH=/tmp/seattle-weather.csv npm run test:integration` ; il vérifie aussi le retour au texte sans modification du CSV.

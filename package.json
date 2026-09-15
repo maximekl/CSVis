@@ -5,6 +5,7 @@
   "publisher": "MaximeK",
   "private": true,
   "description": "A read-only CSV table viewer with DuckDB SQL support for Cursor and VS Code.",
+  "icon": "images/icon.png",
   "categories": [
     "Visualization"
   ],
