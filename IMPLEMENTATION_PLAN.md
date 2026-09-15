@@ -170,7 +170,7 @@ Chaque tâche de ce document est conçue pour représenter environ 30 à 90 minu
 
 ### T17 — Valider un CSV de 500 Mo
 
-- [ ] Générer une fixture temporaire non versionnée et mesurer l’ouverture, la pagination, la mémoire et le nettoyage.
+- [x] Générer une fixture temporaire non versionnée et mesurer l’ouverture, la pagination, la mémoire et le nettoyage.
 - **Dépendances :** T15, T16.
 - **Livrables :** générateur de fixture et scénario de performance reproductible.
 - **Vérification :** `npm run test:performance`.

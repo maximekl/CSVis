@@ -51,6 +51,7 @@
     "test": "npm run compile && npm run test:unit && node dist/scripts/run-integration-tests.js",
     "test:unit": "node --test dist/test/*.test.js",
     "test:integration": "npm run compile && node dist/scripts/run-integration-tests.js",
+    "test:performance": "npm run compile && node dist/scripts/run-performance-tests.js",
     "test:duckdb": "npm run compile && node --test dist/test/duckdbAdapter.test.js",
     "test:csv": "npm run compile && node --test dist/test/csv*.test.js",
     "test:query": "npm run compile && node --test dist/test/query*.test.js",
