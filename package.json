@@ -5,6 +5,12 @@
   "publisher": "MaximeK",
   "private": true,
   "description": "A read-only CSV table viewer with DuckDB SQL support for Cursor and VS Code.",
+  "pricing": "Free",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maximekl/CSVis.git"
+  },
   "icon": "images/icon.png",
   "categories": [
     "Visualization"
