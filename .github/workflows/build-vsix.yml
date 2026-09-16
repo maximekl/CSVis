@@ -21,10 +21,13 @@ jobs:
         include:
           - target: darwin-arm64
             runner: macos-15
+            package_script: package:macos
           - target: linux-x64
             runner: ubuntu-24.04
+            package_script: package:linux
           - target: win32-x64
             runner: windows-2025
+            package_script: package:windows
 
     steps:
       - name: Check out source
@@ -60,7 +63,7 @@ jobs:
           fi
 
       - name: Package platform VSIX
-        run: npm run package
+        run: npm run ${{ matrix.package_script }}
 
       - name: Verify installed VSIX
         shell: bash

@@ -15,7 +15,16 @@ npm ci
 npm run package
 ```
 
-Le fichier généré est `dist/csvis-0.0.1-<plateforme>.vsix`, par exemple `dist/csvis-0.0.1-darwin-arm64.vsix` sur un Mac Apple Silicon. La commande refuse une plateforme non prise en charge ou une installation sans module DuckDB natif correspondant.
+`npm run package` cible la plateforme et l’architecture de la machine actuelle. Pour produire explicitement les trois architectures de la release, même depuis une seule machine, utilisez :
+
+```sh
+npm run package:macos    # darwin-arm64
+npm run package:linux    # linux-x64
+npm run package:windows  # win32-x64
+npm run package:all      # les trois VSIX ci-dessus
+```
+
+Chaque commande récupère au besoin le module DuckDB natif de la cible à la version verrouillée dans `package-lock.json`, puis supprime cette installation temporaire après le build. Chaque VSIX est contrôlé pour garantir qu’il contient un seul module natif DuckDB, celui de sa plateforme ; `package:all` produit donc trois archives séparées et non une archive universelle. Cette commande nécessite un accès au registre npm si les modules ne sont pas déjà présents. Les VSIX générés sont dans `dist/csvis-0.0.2-<plateforme>.vsix`. Pour macOS Intel ou Linux ARM64, utilisez `npm run package` directement sur la machine cible.
 
 Dans Cursor ou VS Code, ouvrez la palette de commandes avec `Cmd+Shift+P` (macOS) ou `Ctrl+Shift+P` (Windows/Linux), lancez **Extensions: Install from VSIX…**, puis sélectionnez ce fichier. Recherchez ensuite **CSVis** dans les extensions installées. À ce jour, CSVis n’est pas publiée sur la Marketplace.
 
@@ -62,3 +71,18 @@ npm run verify:package
 Au premier lancement des tests d’intégration ou de `verify:package`, le harnais télécharge VS Code si aucune version n’est encore en cache ; prévoyez donc un accès réseau. Pour `npm test` et `npm run test:integration` en environnement hors ligne, `CSVIS_VSCODE_EXECUTABLE_PATH` peut désigner un exécutable VS Code déjà installé. Pour choisir une version VS Code mise en cache, utilisez `CSVIS_VSCODE_VERSION`.
 
 Le code de l’Extension Host est dans `src/extension.ts`, la session CSV et l’éditeur personnalisé dans `src/editor/`, la source CSV et les options dans `src/csv/`, la validation et la pagination SQL dans `src/query/`, et l’interface React dans `src/webview/`. `src/shared/protocol.ts` définit les messages échangés entre l’Extension Host et la webview. Le packaging est réalisé par `scripts/package-vsix.mjs` ; le workflow multiplateforme se trouve dans `.github/workflows/build-vsix.yml`.
+
+## Publier manuellement sur la Marketplace VS Code
+
+Le workflow `.github/workflows/publish-marketplace.yml` est déclenché uniquement depuis l’onglet **Actions** de GitHub, sur la branche `main`. Il prend le tag d’une release GitHub déjà publiée, télécharge les trois VSIX joints à cette release (`darwin-arm64`, `linux-x64`, `win32-x64`), vérifie leur version et leur identité, puis les publie sur la Marketplace. Il ne reconstruit pas les paquets et ne nécessite aucun PAT : GitHub s’authentifie auprès de Microsoft Entra ID par OIDC, puis `vsce` utilise cette identité avec `--azure-credential`.
+
+Avant la première utilisation :
+
+1. Créez ou vérifiez le publisher Marketplace `MaximeK`. Dans votre abonnement Azure, créez une identité managée attribuée par l’utilisateur et accordez-lui le rôle Azure **Reader** nécessaire à la connexion. Notez son **Client ID**, son **Tenant ID** et son **Subscription ID**.
+2. Ajoutez à cette identité une *federated credential* pour GitHub Actions : issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, subject `repo:maximekl/CSVis:environment:vscode-marketplace`. Dans le portail Azure, choisissez le scénario GitHub Actions avec le dépôt `maximekl/CSVis` et le type **Environment** `vscode-marketplace` pour renseigner ces valeurs. Vérifiez que le subject généré correspond exactement à celui du jeton GitHub.
+3. Dans **Settings** → **Environments** du dépôt GitHub, créez `vscode-marketplace`, limitez les déploiements à `main` et configurez si souhaité un reviewer obligatoire. Ajoutez les variables d’environnement `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` et `AZURE_SUBSCRIPTION_ID` avec les trois identifiants Azure. Supprimez le secret `VSCE_PAT` s’il avait été créé pour l’ancienne configuration ; ce workflow ne l’utilise plus.
+4. Dans **Actions** → **Publish VSIX to VS Code Marketplace** → **Run workflow**, sélectionnez `main`, cochez `identity_only` et laissez `release_tag` vide. Une fois la connexion effectuée, le journal **Show Marketplace identity ID** affiche l’identifiant à ajouter comme membre **Contributor** du publisher `MaximeK` dans la [gestion Marketplace](https://marketplace.visualstudio.com/manage/publishers/). Ce premier lancement ne publie rien.
+
+Pour publier, attendez que les trois VSIX soient présents sur la release GitHub, puis relancez le workflow sur `main` avec `identity_only` désactivé et `release_tag` renseigné (par exemple `v0.0.2`). Le workflow échoue si la release est un brouillon, si la version ne correspond pas au tag ou si une plateforme manque ; une relance ignore les paquets déjà publiés.
+
+Cette configuration associe l’identité Azure au dépôt et à l’environnement GitHub, sans secret de connexion durable. Voir les instructions officielles pour [Azure Login avec OIDC](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended) et la [publication avec Microsoft Entra ID](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace).

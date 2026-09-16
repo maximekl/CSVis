@@ -1,0 +1,136 @@
+name: Publish VSIX to VS Code Marketplace
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Tag of the published GitHub release (not needed for identity setup)
+        required: false
+        type: string
+      identity_only:
+        description: Resolve the Entra identity ID without publishing VSIXs
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vscode-marketplace
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Prepare identity or publish three platform VSIXs
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: vscode-marketplace
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out source
+        if: ${{ ! inputs.identity_only }}
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        if: ${{ ! inputs.identity_only }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install publishing tool
+        if: ${{ ! inputs.identity_only }}
+        run: npm ci
+
+      - name: Check published release
+        if: ${{ ! inputs.identity_only }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_TAG"
+          release_json="$(gh release view "$RELEASE_TAG" --json isDraft,publishedAt,tagName)"
+          jq -e --arg tag "$RELEASE_TAG" \
+            '.tagName == $tag and .isDraft == false and .publishedAt != null' \
+            <<< "$release_json" > /dev/null
+          mkdir -p dist
+          gh release download "$RELEASE_TAG" --dir dist --pattern '*.vsix'
+
+      - name: Check platform packages and version
+        if: ${{ ! inputs.identity_only }}
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(dist/*.vsix)
+          test "${#packages[@]}" -eq 3
+
+          version="$(unzip -p "${packages[0]}" extension/package.json | jq -r '.version')"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$RELEASE_TAG" == "$version" || "$RELEASE_TAG" == "v$version" ]]
+
+          for target in darwin-arm64 linux-x64 win32-x64; do
+            package="dist/csvis-${version}-${target}.vsix"
+            test -f "$package"
+            unzip -tqq "$package"
+            unzip -p "$package" extension/package.json | jq -e \
+              --arg version "$version" \
+              '.name == "csvis" and .publisher == "MaximeK" and .version == $version' \
+              > /dev/null
+            unzip -p "$package" extension.vsixmanifest | \
+              grep -Fq "TargetPlatform=\"${target}\""
+          done
+
+      - name: Check Azure identity configuration
+        shell: bash
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$AZURE_CLIENT_ID"
+          test -n "$AZURE_TENANT_ID"
+          test -n "$AZURE_SUBSCRIPTION_ID"
+
+      - name: Sign in to Azure with federated identity
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Show Marketplace identity ID
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity_id="$(az rest \
+            --url https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
+            --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+            --query id --output tsv)"
+          test -n "$identity_id"
+          echo "Add this identity ID as a Contributor of publisher MaximeK: $identity_id"
+
+      - name: Publish to VS Code Marketplace
+        if: ${{ ! inputs.identity_only }}
+        shell: bash
+        env:
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+          npx vsce publish --azure-credential --skip-duplicate --packagePath \
+            dist/*-darwin-arm64.vsix \
+            dist/*-linux-x64.vsix \
+            dist/*-win32-x64.vsix
