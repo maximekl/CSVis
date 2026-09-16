@@ -65,6 +65,16 @@ test("executes selection, filter, aggregate and two result pages", async () => {
     const nextRequest = beginQuery(state, "next", "preview-next");
     assert.ok(nextRequest);
     assert.equal(nextRequest.request.sql, "SELECT id, name FROM csv ORDER BY id");
+    assert.equal(nextRequest.state.status, "ready");
+    if (nextRequest.state.status !== "ready" || state.status !== "ready") {
+      throw new Error("Pagination closed the webview");
+    }
+    assert.equal(nextRequest.state.result, state.result);
+    const refreshingMarkup = renderToStaticMarkup(
+      createElement(App, { state: nextRequest.state }),
+    );
+    assert.match(refreshingMarkup, /aria-busy="true"/);
+    assert.match(refreshingMarkup, /name-1/);
 
     const secondPage = await submit(session, state, "next", "next-page");
     state = secondPage.state;
@@ -102,12 +112,28 @@ test("keeps SQL errors in the webview and ignores stale responses", async () => 
   const session = await CsvSession.create(fileUri(fixture));
 
   try {
-    const state = updateQueryText(
+    const successfulAttempt = beginQuery(
       initializedState(),
+      "run",
+      "previous-query",
+    );
+    assert.ok(successfulAttempt);
+    const previousResult = await session.executeQuery(successfulAttempt.request);
+    const previousState = applyHostMessage(successfulAttempt.state, {
+      type: "queryResult",
+      result: previousResult,
+    });
+    const state = updateQueryText(
+      previousState,
       "SELECT * FROM missing_table",
     );
     const attempt = beginQuery(state, "run", "bad-query");
     assert.ok(attempt);
+    assert.equal(attempt.state.status, "ready");
+    if (attempt.state.status !== "ready") {
+      throw new Error("Query closed the webview");
+    }
+    assert.equal(attempt.state.result, previousResult);
 
     const staleResult: QueryResult = {
       requestId: "older-query",
@@ -143,11 +169,12 @@ test("keeps SQL errors in the webview and ignores stale responses", async () => 
     }
 
     assert.match(errorState.error ?? "", /Query is not valid DuckDB SQL/);
-    assert.equal(errorState.result, undefined);
+    assert.equal(errorState.result, previousResult);
     const markup = renderToStaticMarkup(createElement(App, { state: errorState }));
     assert.match(markup, /role="alert"/);
     assert.match(markup, /SQL query console/);
     assert.match(markup, /Run query/);
+    assert.match(markup, /Alice/);
 
     const recovered = await submit(
       session,
@@ -182,6 +209,11 @@ test("toggles column sorting and keeps it across pagination", () => {
 
   const ascending = beginSort(state, 1, "sort-ascending");
   assert.ok(ascending);
+  assert.equal(ascending.state.status, "ready");
+  if (ascending.state.status !== "ready" || state.status !== "ready") {
+    throw new Error("Sorting closed the webview");
+  }
+  assert.equal(ascending.state.result, state.result);
   assert.deepEqual(ascending.request.sort, {
     columnIndex: 1,
     direction: "ascending",

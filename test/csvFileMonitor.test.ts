@@ -66,7 +66,7 @@ test("invalidates stale queries, reloads changed content, and handles deletion a
     if (state.status !== "ready") {
       throw new Error("Webview unexpectedly closed");
     }
-    assert.equal(state.result, undefined);
+    assert.deepEqual(state.result?.rows, [["1", "Alice"]]);
     assert.equal(state.pendingRequestId, undefined);
     assert.equal(beginQuery(state, "reload", "not-yet"), null);
     assert.equal(
@@ -76,7 +76,9 @@ test("invalidates stale queries, reloads changed content, and handles deletion a
       }),
       state,
     );
-    assert.doesNotMatch(renderToStaticMarkup(createElement(App, { state })), /Alice/);
+    const reloadingMarkup = renderToStaticMarkup(createElement(App, { state }));
+    assert.match(reloadingMarkup, /aria-busy="true"/);
+    assert.match(reloadingMarkup, /Alice/);
 
     const ready = await waitForStatus(messages, "ready", 1);
     state = applyHostMessage(state, ready);

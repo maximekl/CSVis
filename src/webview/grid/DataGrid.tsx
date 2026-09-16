@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, UIEvent } from "react";
 
 import type { QueryResult, QuerySort } from "../../shared/protocol";
@@ -110,14 +110,14 @@ export function DataGrid({
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = viewportRef.current;
 
     if (element !== null) {
       element.scrollTop = 0;
       setViewport((current) => ({ ...current, scrollTop: 0 }));
     }
-  }, [result]);
+  }, [result.requestId]);
 
   const onScroll = (event: UIEvent<HTMLDivElement>): void => {
     const element = event.currentTarget;

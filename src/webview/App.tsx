@@ -29,6 +29,11 @@ export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Elem
     );
   }
 
+  const tableRefreshing =
+    state.pendingRequestId !== undefined ||
+    state.pendingSettingsRequestId !== undefined ||
+    state.fileStatus === "reloading";
+
   return (
     <main className="app-shell">
       <header>
@@ -52,7 +57,7 @@ export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Elem
       <CsvSettingsPanel state={state} actions={actions} />
       <SqlConsole state={state} actions={actions} />
       {state.result !== undefined ? (
-        <section aria-label="CSV preview">
+        <section aria-label="CSV preview" aria-busy={tableRefreshing}>
           <h2>Preview ready</h2>
           <p className="muted">
             {state.result.rows.length} rows · {state.result.columns.length}{" "}

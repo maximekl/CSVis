@@ -85,7 +85,6 @@ export function applyHostMessage(
       return {
         ...state,
         pendingRequestId: undefined,
-        result: undefined,
         error: message.message,
       };
     case "csvOptionsUpdated":
@@ -100,7 +99,6 @@ export function applyHostMessage(
             ? undefined
             : state.pendingSettingsRequestId,
         settingsError: undefined,
-        result: undefined,
         error: undefined,
       };
     case "csvOptionsError":
@@ -133,7 +131,10 @@ export function applyHostMessage(
         page: 0,
         sort: undefined,
         pendingRequestId: undefined,
-        result: undefined,
+        result:
+          message.status === "missing" || message.status === "error"
+            ? undefined
+            : state.result,
         error: undefined,
       };
   }
@@ -153,7 +154,6 @@ export function beginSettingsUpdate(
     pendingRequestId: undefined,
     pendingSettingsRequestId: requestId,
     settingsError: undefined,
-    result: undefined,
     error: undefined,
   };
 }
@@ -230,7 +230,6 @@ export function beginQuery(
       page,
       sort,
       pendingRequestId: requestId,
-      result: undefined,
       error: undefined,
     },
   };
@@ -277,7 +276,6 @@ export function beginSort(
       page: 0,
       sort,
       pendingRequestId: requestId,
-      result: undefined,
       error: undefined,
     },
   };

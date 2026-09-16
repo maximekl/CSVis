@@ -102,6 +102,10 @@ test("applies settings, discards stale results, restarts page one and restores a
     const pending = beginSettingsUpdate(state, "change-settings");
     assert.ok(pending);
     assert.equal(pending.status, "ready");
+    if (pending.status !== "ready") {
+      throw new Error("Settings update closed the webview");
+    }
+    assert.equal(pending.result, secondResult);
     assert.equal(beginQuery(pending, "reload", "blocked"), null);
     const stale: QueryResult = { ...secondResult, requestId: "second-page" };
     assert.equal(
@@ -122,10 +126,15 @@ test("applies settings, discards stale results, restarts page one and restores a
     }
     assert.equal(state.page, 0);
     assert.equal(state.pendingSettingsRequestId, undefined);
-    assert.equal(state.result, undefined);
+    assert.equal(state.result, secondResult);
 
     const reloaded = beginQuery(state, "reload", "reloaded");
     assert.ok(reloaded);
+    assert.equal(reloaded.state.status, "ready");
+    if (reloaded.state.status !== "ready") {
+      throw new Error("Reload closed the webview");
+    }
+    assert.equal(reloaded.state.result, secondResult);
     assert.equal(reloaded.request.page, 0);
     assert.equal(reloaded.request.sql, "SELECT id, name FROM csv ORDER BY id");
     const reloadedResult = await document.session.executeQuery(reloaded.request);
