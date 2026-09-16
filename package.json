@@ -1,7 +1,7 @@
 {
   "name": "csvis",
   "displayName": "CSVis",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "MaximeK",
   "private": true,
   "description": "A read-only CSV table viewer with DuckDB SQL support for Cursor and VS Code.",
