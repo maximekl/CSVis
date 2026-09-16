@@ -142,15 +142,35 @@ test("scrolls to distant cells and resizes a visible column", async () => {
   const container = dom.window.document.getElementById("root");
   assert.ok(container);
   const root = createRoot(container);
+  let sortedColumn: number | undefined;
 
   try {
     await act(async () => {
-      root.render(createElement(DataGrid, { result: createLargeResult() }));
+      root.render(createElement(DataGrid, {
+        result: createLargeResult(),
+        sort: { columnIndex: 0, direction: "ascending" },
+        actions: {
+          onSortColumn: (columnIndex) => {
+            sortedColumn = columnIndex;
+          },
+        },
+      }));
     });
 
     const viewport = container.querySelector<HTMLElement>("[role='grid']");
     assert.ok(viewport);
     assert.ok(container.querySelectorAll("[role='gridcell']").length < 100);
+    const sortButton = container.querySelector<HTMLButtonElement>(
+      "[aria-label='Sort by column0']",
+    );
+    assert.ok(sortButton);
+    assert.equal(
+      sortButton.closest("[role=columnheader]")?.getAttribute("aria-sort"),
+      "ascending",
+    );
+    assert.match(sortButton.textContent ?? "", /▲/);
+    await act(async () => sortButton.click());
+    assert.equal(sortedColumn, 0);
 
     await act(async () => {
       viewport.scrollTop = HEADER_HEIGHT + 100 * ROW_HEIGHT;

@@ -22,6 +22,7 @@ import { SqlConsole, type QueryConsoleActions } from "../src/webview/SqlConsole"
 import {
   applyHostMessage,
   beginQuery,
+  beginSort,
   INITIAL_WEBVIEW_STATE,
   updateQueryText,
   type QueryAction,
@@ -161,6 +162,67 @@ test("keeps SQL errors in the webview and ignores stale responses", async () => 
   }
 });
 
+test("toggles column sorting and keeps it across pagination", () => {
+  const initial = beginQuery(initializedState(), "run", "initial-sort-result");
+  assert.ok(initial);
+  let state = applyHostMessage(initial.state, {
+    type: "queryResult",
+    result: {
+      requestId: "initial-sort-result",
+      columns: [
+        { name: "id", type: "BIGINT" },
+        { name: "name", type: "VARCHAR" },
+      ],
+      rows: [[1, "Alice"]],
+      page: 0,
+      pageSize: 200,
+      hasNextPage: true,
+    },
+  });
+
+  const ascending = beginSort(state, 1, "sort-ascending");
+  assert.ok(ascending);
+  assert.deepEqual(ascending.request.sort, {
+    columnIndex: 1,
+    direction: "ascending",
+  });
+  assert.equal(ascending.request.page, 0);
+  state = applyHostMessage(ascending.state, {
+    type: "queryResult",
+    result: {
+      requestId: "sort-ascending",
+      columns: [
+        { name: "id", type: "BIGINT" },
+        { name: "name", type: "VARCHAR" },
+      ],
+      rows: [[1, "Alice"]],
+      page: 0,
+      pageSize: 200,
+      hasNextPage: true,
+    },
+  });
+
+  const nextPage = beginQuery(state, "next", "sorted-next-page");
+  assert.ok(nextPage);
+  assert.deepEqual(nextPage.request.sort, ascending.request.sort);
+
+  const descending = beginSort(state, 1, "sort-descending");
+  assert.ok(descending);
+  assert.equal(descending.request.sort?.direction, "descending");
+
+  const otherColumn = beginSort(state, 0, "sort-other-column");
+  assert.ok(otherColumn);
+  assert.deepEqual(otherColumn.request.sort, {
+    columnIndex: 0,
+    direction: "ascending",
+  });
+  assert.equal(beginSort(state, 2, "sort-missing-column"), null);
+
+  const freshQuery = beginQuery(state, "run", "fresh-query");
+  assert.ok(freshQuery);
+  assert.equal(freshQuery.request.sort, undefined);
+});
+
 test("rejects malformed messages before they reach DuckDB", () => {
   assert.equal(
     isRunQueryMessage({
@@ -170,6 +232,7 @@ test("rejects malformed messages before they reach DuckDB", () => {
         sql: "SELECT 1",
         page: 0,
         pageSize: 200,
+        sort: { columnIndex: 0, direction: "ascending" },
       },
     }),
     true,
@@ -179,6 +242,19 @@ test("rejects malformed messages before they reach DuckDB", () => {
     isRunQueryMessage({
       type: "runQuery",
       request: { requestId: "bad", sql: "SELECT 1", page: "0" },
+    }),
+    false,
+  );
+  assert.equal(
+    isRunQueryMessage({
+      type: "runQuery",
+      request: {
+        requestId: "bad-sort",
+        sql: "SELECT 1",
+        page: 0,
+        pageSize: 200,
+        sort: { columnIndex: 0, direction: "sideways" },
+      },
     }),
     false,
   );

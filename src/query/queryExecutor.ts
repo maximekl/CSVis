@@ -29,8 +29,14 @@ export class QueryExecutor {
       throw new RangeError("Query offset exceeds the safe integer range");
     }
 
+    const orderBy = request.sort === undefined
+      ? ""
+      : `ORDER BY ${request.sort.columnIndex + 1} ${
+          request.sort.direction === "ascending" ? "ASC" : "DESC"
+        }\n`;
     const result = await this.database.query(
       `SELECT * FROM (\n${sql}\n) AS __csvis_query\n` +
+        orderBy +
         `LIMIT ${request.pageSize + 1} OFFSET ${offset}`,
     );
     const fetchedRows = result.getRows();
@@ -68,5 +74,17 @@ function validateRequest(request: QueryRequest): void {
     throw new RangeError(
       `Query page size must be between 1 and ${MAX_QUERY_PAGE_SIZE}`,
     );
+  }
+
+  if (
+    request.sort !== undefined &&
+    (
+      !Number.isSafeInteger(request.sort.columnIndex) ||
+      request.sort.columnIndex < 0 ||
+      (request.sort.direction !== "ascending" &&
+        request.sort.direction !== "descending")
+    )
+  ) {
+    throw new RangeError("Query sort must contain a valid column and direction");
   }
 }

@@ -9,7 +9,7 @@ CSVis lets you explore CSV files as tables in Cursor or VS Code without changing
 ## Features
 
 - Open a CSV directly as a table, or switch between the table and text views.
-- Browse rows and columns, resize columns, and move between result pages.
+- Browse rows and columns, sort by clicking a column header, resize columns, and move between result pages.
 - Filter, sort, select columns, and calculate statistics with SQL.
 - Adjust CSV parsing options, including the delimiter, header row, and encoding.
 - Restore the settings selected for a file in the same workspace.
@@ -33,7 +33,7 @@ Chloé,Paris,18
 
 ### Open and browse the table
 
-Open `scores.csv`. CSVis displays all three rows with the `name`, `city`, and `score` columns. Each column name and type appears in the header. If a column is too narrow, drag its right edge to reveal the full value.
+Open `scores.csv`. CSVis displays all three rows with the `name`, `city`, and `score` columns. Each column name and type appears in the header. Click a column header once to sort its values in ascending order and again for descending order. The sort applies to the complete result, including every page. If a column is too narrow, drag its right edge to reveal the full value.
 
 If the CSV is already open as text, run **CSVis: Open CSV as Table** from the Command Palette. To view the original text again, run **View: Reopen Editor With…** and select **Text Editor**. Cells cannot be edited in the table view.
 

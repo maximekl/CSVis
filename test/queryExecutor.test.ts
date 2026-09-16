@@ -87,6 +87,30 @@ test("returns at most 200 rows and detects the next page", async () => {
   }
 });
 
+test("sorts the complete result before pagination", async () => {
+  const database = await DuckDBAdapter.createInMemory();
+  const executor = new QueryExecutor(database);
+  const sql = "SELECT i AS value FROM range(401) AS values(i)";
+
+  try {
+    const firstPage = await executor.execute({
+      ...request(sql, 0),
+      sort: { columnIndex: 0, direction: "descending" },
+    });
+    const secondPage = await executor.execute({
+      ...request(sql, 1),
+      sort: { columnIndex: 0, direction: "descending" },
+    });
+
+    assert.deepEqual(firstPage.rows.at(0), [400n]);
+    assert.deepEqual(firstPage.rows.at(-1), [201n]);
+    assert.deepEqual(secondPage.rows.at(0), [200n]);
+    assert.deepEqual(secondPage.rows.at(-1), [1n]);
+  } finally {
+    database.dispose();
+  }
+});
+
 test("rejects invalid pagination", async () => {
   const database = await DuckDBAdapter.createInMemory();
   const executor = new QueryExecutor(database);
@@ -97,6 +121,13 @@ test("rejects invalid pagination", async () => {
       executor.execute({
         ...request("SELECT 1"),
         pageSize: MAX_QUERY_PAGE_SIZE + 1,
+      }),
+      RangeError,
+    );
+    await assert.rejects(
+      executor.execute({
+        ...request("SELECT 1"),
+        sort: { columnIndex: -1, direction: "ascending" },
       }),
       RangeError,
     );

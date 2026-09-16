@@ -1,23 +1,49 @@
 .csv-settings {
   margin-top: 16px;
-  padding: 12px;
   border: 1px solid var(--vscode-panel-border);
   border-radius: 3px;
 }
 
-.csv-settings h2 {
-  margin: 0 0 12px;
+.csv-settings-summary {
+  padding: 7px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.csv-settings-summary:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.csv-settings[open] .csv-settings-summary {
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.csv-settings-content {
+  padding: 10px;
 }
 
 .csv-settings-form {
-  display: grid;
-  grid-template-columns: minmax(120px, auto) minmax(160px, 1fr);
-  align-items: center;
-  gap: 8px 12px;
-  max-width: 520px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
 }
 
-.csv-settings-form label {
+.csv-settings-field {
+  display: grid;
+  flex: 1 1 150px;
+  gap: 4px;
+  max-width: 240px;
+}
+
+.csv-settings-delimiter-value {
+  flex-basis: 120px;
+  max-width: 160px;
+}
+
+.csv-settings-field label {
   font-weight: 600;
 }
 
@@ -34,8 +60,7 @@
 }
 
 .csv-settings-form button {
-  grid-column: 2;
-  justify-self: start;
+  flex: 0 0 auto;
   padding: 5px 10px;
   border: 1px solid var(--vscode-button-border, transparent);
   border-radius: 3px;
@@ -69,11 +94,13 @@
 }
 
 @media (max-width: 480px) {
-  .csv-settings-form {
-    grid-template-columns: 1fr;
+  .csv-settings-field,
+  .csv-settings-delimiter-value {
+    flex-basis: 100%;
+    max-width: none;
   }
 
   .csv-settings-form button {
-    grid-column: 1;
+    width: 100%;
   }
 }

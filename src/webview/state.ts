@@ -4,6 +4,7 @@ import type {
   HostToWebviewMessage,
   QueryRequest,
   QueryResult,
+  QuerySort,
 } from "../shared/protocol";
 
 export const QUERY_PAGE_SIZE = 200;
@@ -22,6 +23,7 @@ export type WebviewState =
       readonly queryText: string;
       readonly executedSql: string;
       readonly page: number;
+      readonly sort?: QuerySort;
       readonly pendingRequestId?: string;
       readonly pendingSettingsRequestId?: string;
       readonly settingsError?: string;
@@ -91,6 +93,7 @@ export function applyHostMessage(
         ...state,
         options: message.options,
         page: 0,
+        sort: undefined,
         pendingRequestId: undefined,
         pendingSettingsRequestId:
           message.requestId === state.pendingSettingsRequestId
@@ -128,6 +131,7 @@ export function applyHostMessage(
         fileRevision: message.revision,
         fileMessage: message.message,
         page: 0,
+        sort: undefined,
         pendingRequestId: undefined,
         result: undefined,
         error: undefined,
@@ -177,15 +181,18 @@ export function beginQuery(
 
   let sql: string;
   let page: number;
+  let sort: QuerySort | undefined;
 
   switch (action) {
     case "run":
       sql = state.queryText;
       page = 0;
+      sort = undefined;
       break;
     case "reload":
       sql = state.executedSql;
       page = 0;
+      sort = state.sort;
       break;
     case "previous":
       if (state.result === undefined || state.page === 0) {
@@ -194,6 +201,7 @@ export function beginQuery(
 
       sql = state.executedSql;
       page = state.page - 1;
+      sort = state.sort;
       break;
     case "next":
       if (state.result === undefined || !state.result.hasNextPage) {
@@ -202,6 +210,7 @@ export function beginQuery(
 
       sql = state.executedSql;
       page = state.page + 1;
+      sort = state.sort;
       break;
   }
 
@@ -210,6 +219,7 @@ export function beginQuery(
     sql,
     page,
     pageSize: QUERY_PAGE_SIZE,
+    sort,
   };
 
   return {
@@ -218,6 +228,54 @@ export function beginQuery(
       ...state,
       executedSql: sql,
       page,
+      sort,
+      pendingRequestId: requestId,
+      result: undefined,
+      error: undefined,
+    },
+  };
+}
+
+export function beginSort(
+  state: WebviewState,
+  columnIndex: number,
+  requestId: string,
+): { readonly state: WebviewState; readonly request: QueryRequest } | null {
+  if (
+    state.status !== "ready" ||
+    state.pendingRequestId !== undefined ||
+    state.pendingSettingsRequestId !== undefined ||
+    state.fileStatus !== "ready" ||
+    state.result === undefined ||
+    !Number.isSafeInteger(columnIndex) ||
+    columnIndex < 0 ||
+    columnIndex >= state.result.columns.length
+  ) {
+    return null;
+  }
+
+  const sort: QuerySort = {
+    columnIndex,
+    direction:
+      state.sort?.columnIndex === columnIndex &&
+      state.sort.direction === "ascending"
+        ? "descending"
+        : "ascending",
+  };
+  const request: QueryRequest = {
+    requestId,
+    sql: state.executedSql,
+    page: 0,
+    pageSize: QUERY_PAGE_SIZE,
+    sort,
+  };
+
+  return {
+    request,
+    state: {
+      ...state,
+      page: 0,
+      sort,
       pendingRequestId: requestId,
       result: undefined,
       error: undefined,

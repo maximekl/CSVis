@@ -42,7 +42,7 @@ SELECT name, score FROM csv WHERE score >= 10 ORDER BY score DESC
 SELECT count(*) AS lignes, sum(score) AS total FROM csv
 ```
 
-Les résultats sont paginés par blocs de 200 lignes ; utilisez **Previous** et **Next**. Une nouvelle requête ou un changement de réglages repart à la première page. Les instructions de modification (`INSERT`, `DELETE`, `CREATE`, etc.), les requêtes multiples, les lectures d’autres fichiers et les accès externes sont refusés. Les erreurs SQL s’affichent dans la console sans fermer l’éditeur.
+Les résultats sont paginés par blocs de 200 lignes ; utilisez **Previous** et **Next**. Cliquez une fois sur l’en-tête d’une colonne pour trier le résultat complet par ordre croissant, puis une seconde fois pour passer en ordre décroissant. Une nouvelle requête ou un changement de réglages repart à la première page. Les instructions de modification (`INSERT`, `DELETE`, `CREATE`, etc.), les requêtes multiples, les lectures d’autres fichiers et les accès externes sont refusés. Les erreurs SQL s’affichent dans la console sans fermer l’éditeur.
 
 ## Corriger la lecture du CSV
 

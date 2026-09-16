@@ -19,6 +19,13 @@ export interface ColumnMetadata {
   readonly type: string;
 }
 
+export type QuerySortDirection = "ascending" | "descending";
+
+export interface QuerySort {
+  readonly columnIndex: number;
+  readonly direction: QuerySortDirection;
+}
+
 export type JsonValue =
   | string
   | number
@@ -32,6 +39,7 @@ export interface QueryRequest {
   readonly sql: string;
   readonly page: number;
   readonly pageSize: number;
+  readonly sort?: QuerySort;
 }
 
 export interface QueryResult {

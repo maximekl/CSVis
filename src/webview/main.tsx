@@ -9,6 +9,7 @@ import { App } from "./App";
 import {
   applyHostMessage,
   beginQuery,
+  beginSort,
   beginSettingsUpdate,
   INITIAL_WEBVIEW_STATE,
   updateQueryText,
@@ -45,6 +46,7 @@ const actions = {
   onRunQuery: (): void => submitQuery("run"),
   onPreviousPage: (): void => submitQuery("previous"),
   onNextPage: (): void => submitQuery("next"),
+  onSortColumn: (columnIndex: number): void => submitSort(columnIndex),
   onApplyCsvOptions: (options: CsvOptions): void => {
     const requestId = `settings-${++nextSettingsRequestNumber}`;
     const pending = beginSettingsUpdate(state, requestId);
@@ -105,6 +107,23 @@ function submitQuery(action: QueryAction): void {
   const attempt = beginQuery(
     state,
     action,
+    `query-${nextRequestNumber + 1}`,
+  );
+
+  if (attempt === null) {
+    return;
+  }
+
+  nextRequestNumber += 1;
+  state = attempt.state;
+  render();
+  vscodeApi.postMessage({ type: "runQuery", request: attempt.request });
+}
+
+function submitSort(columnIndex: number): void {
+  const attempt = beginSort(
+    state,
+    columnIndex,
     `query-${nextRequestNumber + 1}`,
   );
 

@@ -1,9 +1,9 @@
 import type { WebviewState } from "./state";
-import { DataGrid } from "./grid/DataGrid";
+import { DataGrid, type DataGridActions } from "./grid/DataGrid";
 import { SqlConsole, type QueryConsoleActions } from "./SqlConsole";
 import { CsvSettingsPanel, type CsvSettingsActions } from "./CsvSettingsPanel";
 
-type AppActions = QueryConsoleActions & CsvSettingsActions;
+type AppActions = QueryConsoleActions & CsvSettingsActions & DataGridActions;
 
 export interface AppProps {
   readonly state: WebviewState;
@@ -15,6 +15,7 @@ const NOOP_ACTIONS: AppActions = {
   onRunQuery: () => undefined,
   onPreviousPage: () => undefined,
   onNextPage: () => undefined,
+  onSortColumn: () => undefined,
   onApplyCsvOptions: () => undefined,
 };
 
@@ -57,7 +58,11 @@ export function App({ state, actions = NOOP_ACTIONS }: AppProps): React.JSX.Elem
             {state.result.rows.length} rows · {state.result.columns.length}{" "}
             columns
           </p>
-          <DataGrid result={state.result} />
+          <DataGrid
+            result={state.result}
+            sort={state.sort}
+            actions={actions}
+          />
         </section>
       ) : (
         state.pendingRequestId !== undefined && (

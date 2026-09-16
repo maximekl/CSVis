@@ -48,6 +48,24 @@ export function isRunQueryMessage(
     "page" in request &&
     typeof request.page === "number" &&
     "pageSize" in request &&
-    typeof request.pageSize === "number"
+    typeof request.pageSize === "number" &&
+    (
+      !("sort" in request) ||
+      request.sort === undefined ||
+      isQuerySort(request.sort)
+    )
+  );
+}
+
+function isQuerySort(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "columnIndex" in value &&
+    typeof value.columnIndex === "number" &&
+    Number.isSafeInteger(value.columnIndex) &&
+    value.columnIndex >= 0 &&
+    "direction" in value &&
+    (value.direction === "ascending" || value.direction === "descending")
   );
 }

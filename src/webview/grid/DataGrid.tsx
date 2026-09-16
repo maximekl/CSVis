@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, UIEvent } from "react";
 
-import type { QueryResult } from "../../shared/protocol";
+import type { QueryResult, QuerySort } from "../../shared/protocol";
 import { formatCellValue } from "./cellValue";
 import {
   DEFAULT_COLUMN_WIDTH,
@@ -32,11 +32,23 @@ interface ResizeStart {
 
 export interface DataGridProps {
   readonly result: QueryResult;
+  readonly sort?: QuerySort;
+  readonly actions?: DataGridActions;
   readonly initialViewport?: GridViewport;
 }
 
+export interface DataGridActions {
+  readonly onSortColumn: (columnIndex: number) => void;
+}
+
+const NOOP_ACTIONS: DataGridActions = {
+  onSortColumn: () => undefined,
+};
+
 export function DataGrid({
   result,
+  sort,
+  actions = NOOP_ACTIONS,
   initialViewport = DEFAULT_VIEWPORT,
 }: DataGridProps): React.JSX.Element {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -203,6 +215,9 @@ export function DataGrid({
             const column = result.columns[index];
             const position = positions.columns[index];
             const columnKey = columnKeys[index];
+            const sortDirection = sort?.columnIndex === index
+              ? sort.direction
+              : undefined;
 
             if (
               column === undefined ||
@@ -218,11 +233,29 @@ export function DataGrid({
                 className="data-grid-header-cell"
                 role="columnheader"
                 aria-colindex={index + 2}
+                aria-sort={sortDirection ?? "none"}
                 style={{ left: position.left, width: position.width }}
                 title={`${column.name} · ${column.type}`}
               >
-                <span className="data-grid-column-name">{column.name}</span>
-                <span className="data-grid-column-type">{column.type}</span>
+                <button
+                  type="button"
+                  className="data-grid-sort-button"
+                  aria-label={`Sort by ${column.name}`}
+                  onClick={() => actions.onSortColumn(index)}
+                >
+                  <span className="data-grid-column-name">
+                    {column.name}
+                    {sortDirection !== undefined && (
+                      <span
+                        className="data-grid-sort-indicator"
+                        aria-hidden="true"
+                      >
+                        {sortDirection === "ascending" ? "▲" : "▼"}
+                      </span>
+                    )}
+                  </span>
+                  <span className="data-grid-column-type">{column.type}</span>
+                </button>
                 <div
                   className="data-grid-resize-handle"
                   role="separator"

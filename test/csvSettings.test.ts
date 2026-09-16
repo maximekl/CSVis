@@ -245,6 +245,20 @@ test("offers delimiter, header and encoding controls and submits their draft", a
     await act(async () =>
       root.render(createElement(CsvSettingsPanel, { state: initialized, actions })),
     );
+    const details = container.querySelector<HTMLDetailsElement>(
+      "details.csv-settings",
+    );
+    const summary = container.querySelector<HTMLElement>(
+      "summary.csv-settings-summary",
+    );
+    assert.ok(details);
+    assert.ok(summary);
+    assert.equal(details.open, false);
+    assert.equal(summary.textContent?.trim(), "CSV settings");
+
+    await act(async () => summary.click());
+    assert.equal(details.open, true);
+
     const button = container.querySelector<HTMLButtonElement>("button[type=submit]");
     assert.ok(button);
     assert.equal(button.disabled, true);
@@ -283,7 +297,32 @@ test("offers delimiter, header and encoding controls and submits their draft", a
     await act(async () =>
       root.render(createElement(CsvSettingsPanel, { state: pending, actions })),
     );
+    assert.equal(details.open, true);
     assert.equal(button.disabled, true);
+    assert.equal(button.textContent, "Applying…");
+    for (const control of container.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement
+    >("input, select")) {
+      assert.equal(control.disabled, true);
+    }
+
+    const errorState = applyHostMessage(pending, {
+      type: "csvOptionsError",
+      requestId: "pending",
+      message: "Invalid delimiter",
+    });
+    assert.equal(errorState.status, "ready");
+    if (errorState.status !== "ready") {
+      throw new Error("Webview unexpectedly closed");
+    }
+    await act(async () =>
+      root.render(createElement(CsvSettingsPanel, { state: errorState, actions })),
+    );
+    assert.equal(details.open, true);
+    assert.equal(
+      container.querySelector<HTMLElement>("[role=alert]")?.textContent,
+      "Invalid delimiter",
+    );
   } finally {
     await act(async () => root.unmount());
     dom.window.close();

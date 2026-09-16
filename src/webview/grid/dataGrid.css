@@ -60,7 +60,29 @@
 
 .data-grid-header-cell {
   height: 54px;
-  padding: 7px 14px 6px 10px;
+}
+
+.data-grid-sort-button {
+  box-sizing: border-box;
+  width: calc(100% - 8px);
+  height: 100%;
+  padding: 7px 6px 6px 10px;
+  overflow: hidden;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.data-grid-sort-button:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.data-grid-sort-button:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: -2px;
 }
 
 .data-grid-column-name,
@@ -73,6 +95,12 @@
 
 .data-grid-column-name {
   font-weight: 600;
+}
+
+.data-grid-sort-indicator {
+  margin-left: 6px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.8em;
 }
 
 .data-grid-column-type {

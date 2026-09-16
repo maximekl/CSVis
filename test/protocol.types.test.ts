@@ -33,6 +33,7 @@ acceptQueryRequest({
   sql: "SELECT * FROM csv",
   page: 0,
   pageSize: 200,
+  sort: { columnIndex: 1, direction: "ascending" },
 });
 
 acceptQueryResult({
@@ -102,6 +103,18 @@ acceptQueryRequest({
   // @ts-expect-error page must be numeric
   page: "first",
   pageSize: 200,
+});
+
+acceptQueryRequest({
+  requestId: "query-4",
+  sql: "SELECT * FROM csv",
+  page: 0,
+  pageSize: 200,
+  sort: {
+    columnIndex: 0,
+    // @ts-expect-error sort direction must be ascending or descending
+    direction: "sideways",
+  },
 });
 
 acceptQueryResult({
