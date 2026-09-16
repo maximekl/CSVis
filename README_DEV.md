@@ -24,7 +24,7 @@ npm run package:windows  # win32-x64
 npm run package:all      # les trois VSIX ci-dessus
 ```
 
-Chaque commande récupère au besoin le module DuckDB natif de la cible à la version verrouillée dans `package-lock.json`, puis supprime cette installation temporaire après le build. Chaque VSIX est contrôlé pour garantir qu’il contient un seul module natif DuckDB, celui de sa plateforme ; `package:all` produit donc trois archives séparées et non une archive universelle. Cette commande nécessite un accès au registre npm si les modules ne sont pas déjà présents. Les VSIX générés sont dans `dist/csvis-1.0.1-<plateforme>.vsix`. Pour macOS Intel ou Linux ARM64, utilisez `npm run package` directement sur la machine cible.
+Chaque commande récupère au besoin le module DuckDB natif de la cible à la version verrouillée dans `package-lock.json`, puis supprime cette installation temporaire après le build. Chaque VSIX est contrôlé pour garantir qu’il contient un seul module natif DuckDB, celui de sa plateforme ; `package:all` produit donc trois archives séparées et non une archive universelle. Cette commande nécessite un accès au registre npm si les modules ne sont pas déjà présents. Les VSIX générés sont dans `dist/csvis-1.0.2-<plateforme>.vsix`. Pour macOS Intel ou Linux ARM64, utilisez `npm run package` directement sur la machine cible.
 
 Dans Cursor ou VS Code, ouvrez la palette de commandes avec `Cmd+Shift+P` (macOS) ou `Ctrl+Shift+P` (Windows/Linux), lancez **Extensions: Install from VSIX…**, puis sélectionnez ce fichier. Recherchez ensuite **CSVis** dans les extensions installées. À ce jour, CSVis n’est pas publiée sur la Marketplace.
 
